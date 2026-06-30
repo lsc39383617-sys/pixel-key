@@ -114,10 +114,14 @@ export function PixelFlower({
 
               if (!isFilled) {
                 return (
-                  <div
+                  <button
                     key={pixel.id}
-                    aria-hidden
-                    className={pixelClassName}
+                    type="button"
+                    onClick={() => {
+                      alert("여기에 새로운 추억을 추가합니다!");
+                    }}
+                    aria-label="Add new memory"
+                    className={`${pixelClassName} transition-all duration-200 hover:scale-110 hover:ring-2 hover:ring-pink-300`}
                     style={pixelStyle}
                   />
                 );
