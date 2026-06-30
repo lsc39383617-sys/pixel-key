@@ -1,3 +1,6 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import { PixelFlower } from "@/components/flower/PixelFlower";
 import {
   FLOWER_FILLED_COUNT,
@@ -6,12 +9,45 @@ import {
 import { BottomNav } from "@/components/ui/BottomNav";
 import { CompletionCard } from "@/components/ui/CompletionCard";
 import { PrimaryButton } from "@/components/ui/PrimaryButton";
+import { supabase } from "@/lib/supabase";
 
 const COMPLETION_PERCENTAGE = Math.round(
   (FLOWER_FILLED_COUNT / FLOWER_TOTAL_COUNT) * 100,
 );
 
+interface Pixel {
+  id: string;
+  uid: string;
+  name: string;
+  description: string;
+  image: string | null;
+  lat: number | null;
+  lng: number | null;
+}
+
 export default function HomePage() {
+  const [pixels, setPixels] = useState<Pixel[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadPixels() {
+      const { data, error } = await supabase
+        .from("pixels")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        console.error(error);
+      } else {
+        setPixels(data ?? []);
+      }
+
+      setLoading(false);
+    }
+
+    loadPixels();
+  }, []);
+
   return (
     <div className="relative bg-warm-gradient min-h-dvh overflow-x-hidden">
       <main className="safe-top relative mx-auto flex min-h-dvh max-w-md flex-col px-5 pb-28 sm:px-6">
@@ -26,6 +62,7 @@ export default function HomePage() {
           <h1 className="text-[2rem] font-semibold leading-[1.12] tracking-[-0.035em] text-stone-900 sm:text-[2.375rem]">
             Grow Your Color
           </h1>
+
           <p className="mx-auto mt-3 max-w-[19rem] text-[15px] leading-[1.5] text-stone-500">
             Collect your favorite places, food and memories into one beautiful
             flower.
@@ -36,6 +73,7 @@ export default function HomePage() {
           <div className="animate-float w-full max-w-[340px]">
             <PixelFlower size="lg" />
           </div>
+
           <p className="mt-4 text-center text-[13px] font-medium text-stone-400">
             Tap a pixel to preview your memories
           </p>
@@ -47,9 +85,43 @@ export default function HomePage() {
             total={FLOWER_TOTAL_COUNT}
             percentage={COMPLETION_PERCENTAGE}
           />
+
           <PrimaryButton className="animate-fade-up animation-delay-400">
             Start My Flower
           </PrimaryButton>
+
+          <div className="mt-4 rounded-3xl bg-white/70 p-4 backdrop-blur">
+            <h2 className="mb-3 font-semibold text-stone-800">
+              Supabase 연결 테스트
+            </h2>
+
+            {loading ? (
+              <p className="text-sm text-stone-500">불러오는 중...</p>
+            ) : pixels.length === 0 ? (
+              <p className="text-sm text-stone-500">
+                데이터가 없습니다.
+              </p>
+            ) : (
+              <div className="space-y-3">
+                {pixels.map((pixel) => (
+                  <div
+                    key={pixel.id}
+                    className="rounded-xl border border-stone-200 bg-white p-3"
+                  >
+                    <div className="font-semibold">{pixel.name}</div>
+
+                    <div className="text-sm text-stone-500">
+                      UID : {pixel.uid}
+                    </div>
+
+                    <div className="mt-1 text-sm">
+                      {pixel.description}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </section>
       </main>
 
