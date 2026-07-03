@@ -20,7 +20,7 @@ export async function getPixel(uid: string): Promise<Pixel | null> {
     .from("pixels")
     .select("*")
     .eq("uid", uid)
-    .maybeSingle(); // ⭐ 핵심 변경
+    .maybeSingle();
 
   if (error) {
     console.error("getPixel error:", error);
@@ -28,4 +28,58 @@ export async function getPixel(uid: string): Promise<Pixel | null> {
   }
 
   return data as Pixel | null;
+}
+
+export async function createPixel(
+  name: string,
+  description: string,
+  image: string,
+) {
+  const uid = crypto.randomUUID().replace(/-/g, "").slice(0, 12);
+
+  console.log("before insert", {
+    uid,
+    name,
+    description,
+    image,
+  });
+
+  const { data, error } = await supabase
+    .from("pixels")
+    .insert({
+      uid,
+      name,
+      description,
+      image,
+    })
+    .select()
+    .single();
+
+  console.log("insert result", { data, error });
+
+  if (error) {
+    console.error("createPixel error:", error);
+    throw error;
+  }
+
+  return data;
+}
+
+export async function uploadImage(file: File) {
+  const fileName = `${crypto.randomUUID()}-${file.name}`;
+
+  const { error } = await supabase.storage
+    .from("pixel-images")
+    .upload(fileName, file);
+
+  if (error) {
+    console.error("uploadImage error:", error);
+    throw error;
+  }
+
+  const { data } = supabase.storage
+    .from("pixel-images")
+    .getPublicUrl(fileName);
+
+  return data.publicUrl;
 }

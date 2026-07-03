@@ -1,128 +1,92 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { PixelFlower } from "@/components/flower/PixelFlower";
-import {
-  FLOWER_FILLED_COUNT,
-  FLOWER_TOTAL_COUNT,
-} from "@/components/flower/flowerData";
 import { BottomNav } from "@/components/ui/BottomNav";
 import { CompletionCard } from "@/components/ui/CompletionCard";
 import { PrimaryButton } from "@/components/ui/PrimaryButton";
-import { supabase } from "@/lib/supabase";
+import { getPixels } from "@/lib/pixel";
+import { Pixel } from "@/types/pixel";
 
-const COMPLETION_PERCENTAGE = Math.round(
-  (FLOWER_FILLED_COUNT / FLOWER_TOTAL_COUNT) * 100,
-);
-
-interface Pixel {
-  id: string;
-  uid: string;
-  name: string;
-  description: string;
-  image: string | null;
-  lat: number | null;
-  lng: number | null;
-}
+const FLOWER_TOTAL_COUNT = 12;
 
 export default function HomePage() {
+  const router = useRouter();
   const [pixels, setPixels] = useState<Pixel[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function loadPixels() {
-      const { data, error } = await supabase
-        .from("pixels")
-        .select("*")
-        .order("created_at", { ascending: false });
-
-      if (error) {
-        console.error(error);
-      } else {
-        setPixels(data ?? []);
-      }
-
+    async function load() {
+      const data = await getPixels();
+      setPixels(data);
       setLoading(false);
     }
 
-    loadPixels();
+    load();
   }, []);
 
   return (
     <div className="relative bg-warm-gradient min-h-dvh overflow-x-hidden">
-      <main className="safe-top relative mx-auto flex min-h-dvh max-w-md flex-col px-5 pb-28 sm:px-6">
-        <header className="animate-fade-up text-center">
-          <div className="mx-auto mb-4 inline-flex items-center gap-2 rounded-full bg-white/60 px-3.5 py-1.5 shadow-sm ring-1 ring-white/80 backdrop-blur-sm">
-            <span className="h-1.5 w-1.5 rounded-full bg-gradient-to-br from-rose-400 to-amber-300" />
-            <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-stone-500">
-              Pixel Bloom
-            </span>
-          </div>
+      <main className="safe-top mx-auto flex min-h-dvh max-w-md flex-col px-5 pb-28">
 
-          <h1 className="text-[2rem] font-semibold leading-[1.12] tracking-[-0.035em] text-stone-900 sm:text-[2.375rem]">
-            Grow Your Color
-          </h1>
-
-          <p className="mx-auto mt-3 max-w-[19rem] text-[15px] leading-[1.5] text-stone-500">
-            Collect your favorite places, food and memories into one beautiful
-            flower.
+        <header className="mt-6 text-center">
+          <h1 className="text-2xl font-bold">Pixel Bloom</h1>
+          <p className="mt-2 text-stone-500">
+            나만의 추억을 Pixel로 기록해보세요.
           </p>
         </header>
 
-        <section className="animate-fade-up animation-delay-200 mt-6 flex flex-1 flex-col items-center justify-center sm:mt-8">
-          <div className="animate-float w-full max-w-[340px]">
-            <PixelFlower size="lg" />
-          </div>
-
-          <p className="mt-4 text-center text-[13px] font-medium text-stone-400">
-            Tap a pixel to preview your memories
-          </p>
+        <section className="mt-6 flex justify-center">
+          <PixelFlower size="lg" />
         </section>
 
-        <section className="animate-fade-up animation-delay-300 mt-5 flex flex-col gap-3 sm:mt-6">
+        <section className="mt-8">
           <CompletionCard
-            filled={FLOWER_FILLED_COUNT}
+            filled={pixels.length}
             total={FLOWER_TOTAL_COUNT}
-            percentage={COMPLETION_PERCENTAGE}
-          />
-
-          <PrimaryButton className="animate-fade-up animation-delay-400">
-            Start My Flower
-          </PrimaryButton>
-
-          <div className="mt-4 rounded-3xl bg-white/70 p-4 backdrop-blur">
-            <h2 className="mb-3 font-semibold text-stone-800">
-              Supabase 연결 테스트
-            </h2>
-
-            {loading ? (
-              <p className="text-sm text-stone-500">불러오는 중...</p>
-            ) : pixels.length === 0 ? (
-              <p className="text-sm text-stone-500">
-                데이터가 없습니다.
-              </p>
-            ) : (
-              <div className="space-y-3">
-                {pixels.map((pixel) => (
-                  <div
-                    key={pixel.id}
-                    className="rounded-xl border border-stone-200 bg-white p-3"
-                  >
-                    <div className="font-semibold">{pixel.name}</div>
-
-                    <div className="text-sm text-stone-500">
-                      UID : {pixel.uid}
-                    </div>
-
-                    <div className="mt-1 text-sm">
-                      {pixel.description}
-                    </div>
-                  </div>
-                ))}
-              </div>
+            percentage={Math.round(
+              (pixels.length / FLOWER_TOTAL_COUNT) * 100
             )}
-          </div>
+          />
         </section>
+
+        <section className="mt-6 flex flex-col gap-3">
+          <PrimaryButton onClick={() => router.push("/add")}>
+            + 새 Pixel 만들기
+          </PrimaryButton>
+        </section>
+
+        <section className="mt-8">
+          <h2 className="mb-3 text-lg font-semibold">
+            내 Pixel
+          </h2>
+
+          {loading ? (
+            <p>불러오는 중...</p>
+          ) : pixels.length === 0 ? (
+            <p className="text-stone-500">
+              아직 만든 Pixel이 없습니다.
+            </p>
+          ) : (
+            <div className="space-y-3">
+              {pixels.map((pixel) => (
+                <button
+                  key={pixel.uid}
+                  onClick={() => router.push(`/pixel/${pixel.uid}`)}
+                  className="w-full rounded-xl border bg-white p-4 text-left shadow-sm transition hover:shadow-md"
+                >
+                  <h3 className="font-semibold">{pixel.name}</h3>
+
+                  <p className="mt-1 text-sm text-stone-500">
+                    {pixel.description}
+                  </p>
+                </button>
+              ))}
+            </div>
+          )}
+        </section>
+
       </main>
 
       <BottomNav active="home" />
