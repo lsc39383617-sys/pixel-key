@@ -17,6 +17,7 @@ export type FlowerPixel = {
   state: PixelState;
   color?: string;
   memory?: MemoryData;
+  uid?: string;
 };
 
 const PASTEL_PALETTE = [

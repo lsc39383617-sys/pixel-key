@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image"; 
 import { getPixel } from "@/lib/pixel";
 import { Pixel } from "@/types/pixel";
 
@@ -46,7 +47,18 @@ export default function PixelPage({ params }: Props) {
   return (
     <main className="mx-auto flex min-h-screen max-w-md flex-col p-6">
       <h1 className="text-3xl font-bold">{pixel.name}</h1>
-
+      {pixel.image && (
+  <div className="mt-6 overflow-hidden rounded-2xl border">
+    <Image
+      src={pixel.image}
+      alt={pixel.name}
+      width={600}
+      height={400}
+      className="h-72 w-full object-cover"
+      unoptimized
+    />
+  </div>
+)}
       <p className="mt-4 text-stone-600">{pixel.description}</p>
 
       <div className="mt-8 rounded-xl border p-4">

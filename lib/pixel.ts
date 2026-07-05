@@ -66,7 +66,9 @@ export async function createPixel(
 }
 
 export async function uploadImage(file: File) {
-  const fileName = `${crypto.randomUUID()}-${file.name}`;
+  const extension = file.name.split(".").pop()?.toLowerCase() || "png";
+
+const fileName = `${crypto.randomUUID()}.${extension}`;
 
   const { error } = await supabase.storage
     .from("pixel-images")

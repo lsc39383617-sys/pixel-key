@@ -38,17 +38,18 @@ export default function HomePage() {
         </header>
 
         <section className="mt-6 flex justify-center">
-          <PixelFlower size="lg" />
-        </section>
+  <PixelFlower
+    size="lg"
+    dbPixels={pixels}
+  />
+</section>  
 
         <section className="mt-8">
-          <CompletionCard
-            filled={pixels.length}
-            total={FLOWER_TOTAL_COUNT}
-            percentage={Math.round(
-              (pixels.length / FLOWER_TOTAL_COUNT) * 100
-            )}
-          />
+        <CompletionCard
+  filled={pixels.length}
+  total={FLOWER_TOTAL_COUNT}
+  percentage={Math.round((pixels.length / FLOWER_TOTAL_COUNT) * 100)}
+/>
         </section>
 
         <section className="mt-6 flex flex-col gap-3">

@@ -1,6 +1,7 @@
 "use client";
-
-import { useCallback, useEffect, useState } from "react";
+console.log("🔥 PixelFlower render", dbPixels.length);
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   FLOWER_CENTER_COLOR,
   FLOWER_FILLED_COUNT,
@@ -9,9 +10,11 @@ import {
   type FlowerPixel,
 } from "./flowerData";
 import { MemoryModal } from "./MemoryModal";
+import { Pixel } from "@/types/pixel";
 
 type PixelFlowerProps = {
   pixels?: FlowerPixel[];
+  dbPixels?: Pixel[];
   size?: "sm" | "md" | "lg";
   className?: string;
 };
@@ -28,20 +31,35 @@ const sizeStyles = {
 
 export function PixelFlower({
   pixels = FLOWER_PIXELS,
+  dbPixels = [],
   size = "lg",
   className = "",
 }: PixelFlowerProps) {
+  console.log("🔥 PixelFlower render");
+console.log("dbPixels:", dbPixels);
+  console.log("🔥 PixelFlower render");
   const styles = sizeStyles[size];
+  const router = useRouter();
+
   const [clickedId, setClickedId] = useState<number | null>(null);
   const [selectedPixel, setSelectedPixel] = useState<FlowerPixel | null>(null);
 
-  const handlePixelClick = useCallback((pixel: FlowerPixel) => {
-    if (pixel.region !== "petal" || pixel.state !== "filled" || !pixel.memory) {
-      return;
-    }
-    setClickedId(pixel.id);
-    setSelectedPixel(pixel);
-  }, []);
+  const handlePixelClick = useCallback(
+    (pixel: FlowerPixel) => {
+      if (pixel.region !== "petal") return;
+
+      if (pixel.uid) {
+        router.push(`/pixel/${pixel.uid}`);
+        return;
+      }
+
+      if (pixel.state !== "filled" || !pixel.memory) return;
+
+      setClickedId(pixel.id);
+      setSelectedPixel(pixel);
+    },
+    [router]
+  );
 
   useEffect(() => {
     if (clickedId === null) return;
@@ -51,60 +69,74 @@ export function PixelFlower({
 
   const closeModal = useCallback(() => setSelectedPixel(null), []);
 
-  const centerPixels = pixels.filter((p) => p.region === "center");
-  const petalPixels = pixels.filter((p) => p.region === "petal");
+  // ✅ 핵심: 데이터 합성
+  const displayPixels = useMemo(() => {
+    const copy = pixels.map((p) => ({ ...p }));
+  
+    const petalPixels = copy.filter((p) => p.region === "petal");
+  
+    // 🔥 DB는 uid 기준으로만 매핑
+    const used = new Set<number>();
+  
+    dbPixels.forEach((dbPixel) => {
+      const target = petalPixels.find((p) => {
+        if (used.has(p.id)) return false;
+        return p.region === "petal" && p.uid == null;
+      });
+  
+      if (!target) return;
+  
+      used.add(target.id);
+  
+      target.state = "filled";
+      target.uid = dbPixel.uid;
+      target.color = "#FFB5BA";
+  
+      target.memory = {
+        title: dbPixel.name,
+        category: "Memory",
+        description: dbPixel.description,
+        location: "",
+      };
+    });
+  
+    return copy;
+  }, [pixels, dbPixels]); 
+
+  const centerPixels = displayPixels.filter((p) => p.region === "center");
+  const petalPixels = displayPixels.filter((p) => p.region === "petal");
 
   return (
     <>
-      <div
-        className={`relative mx-auto ${className}`}
-        role="img"
-        aria-label={`Flower keyring with ${FLOWER_FILLED_COUNT} of ${FLOWER_TOTAL_COUNT} pixels filled`}
-      >
+      <div className={`relative mx-auto ${className}`}>
         <div
           className="pointer-events-none absolute inset-0 -z-10 scale-110 rounded-full bg-gradient-to-b from-rose-200/40 via-amber-100/30 to-violet-200/40 blur-3xl"
-          aria-hidden
         />
 
-        <div className="absolute left-1/2 top-[6%] z-20 -translate-x-1/2 -translate-y-1/2">
-          <div
-            className={`${styles.ring} rounded-full border-[3px] border-stone-300/80 bg-gradient-to-b from-white via-stone-50 to-stone-200/70 shadow-[0_2px_10px_rgba(0,0,0,0.08),inset_0_1px_0_rgba(255,255,255,0.9)]`}
-            aria-hidden
-          />
-          <div
-            className="absolute left-1/2 top-full h-4 w-0.5 -translate-x-1/2 bg-gradient-to-b from-stone-300/80 to-stone-300/20"
-            aria-hidden
-          />
-        </div>
-
-        <div className="rounded-[2.25rem] bg-white/50 p-1 shadow-[0_16px_48px_-12px_rgba(0,0,0,0.14),0_4px_16px_-4px_rgba(0,0,0,0.06)] ring-1 ring-white/90 backdrop-blur-md">
-          <div
-            className={`relative ${styles.container} rounded-[2rem] bg-gradient-to-b from-white/90 via-white/70 to-stone-50/50`}
-          >
+        <div className="rounded-[2.25rem] bg-white/50 p-1">
+          <div className={`relative ${styles.container} rounded-[2rem] bg-white/80`}>
+            
+            {/* center */}
             {centerPixels.map((pixel) => (
               <div
                 key={pixel.id}
-                className={`absolute -translate-x-1/2 -translate-y-1/2 rounded-full ${styles.pixel} shadow-[inset_0_2px_4px_rgba(255,255,255,0.5),inset_0_-2px_4px_rgba(0,0,0,0.08),0_2px_6px_rgba(0,0,0,0.06)]`}
+                className={`absolute -translate-x-1/2 -translate-y-1/2 rounded-full ${styles.pixel}`}
                 style={{
                   left: `${pixel.x}%`,
                   top: `${pixel.y}%`,
                   backgroundColor: FLOWER_CENTER_COLOR,
                 }}
-                aria-hidden
               />
             ))}
 
+            {/* petal */}
             {petalPixels.map((pixel) => {
               const isFilled = pixel.state === "filled";
               const isClicked = clickedId === pixel.id;
 
-              const pixelClassName = `absolute -translate-x-1/2 -translate-y-1/2 rounded-full ${styles.pixel} ${
-                isFilled
-                  ? "cursor-pointer shadow-[inset_0_2px_4px_rgba(255,255,255,0.45),inset_0_-3px_6px_rgba(0,0,0,0.1),0_3px_8px_rgba(0,0,0,0.08)] transition-all duration-200 ease-out hover:scale-[1.18] hover:z-10 hover:shadow-[inset_0_2px_4px_rgba(255,255,255,0.55),inset_0_-3px_6px_rgba(0,0,0,0.12),0_6px_16px_rgba(0,0,0,0.14)] active:scale-90"
-                  : "bg-stone-200/70 shadow-[inset_0_1px_3px_rgba(255,255,255,0.95),inset_0_-1px_2px_rgba(0,0,0,0.05)]"
-              } ${isClicked ? "animate-pixel-pop z-10" : ""}`;
+              const baseClass = `absolute -translate-x-1/2 -translate-y-1/2 rounded-full ${styles.pixel}`;
 
-              const pixelStyle = {
+              const style = {
                 left: `${pixel.x}%`,
                 top: `${pixel.y}%`,
                 ...(isFilled && pixel.color
@@ -116,13 +148,9 @@ export function PixelFlower({
                 return (
                   <button
                     key={pixel.id}
-                    type="button"
-                    onClick={() => {
-                      alert("여기에 새로운 추억을 추가합니다!");
-                    }}
-                    aria-label="Add new memory"
-                    className={`${pixelClassName} transition-all duration-200 hover:scale-110 hover:ring-2 hover:ring-pink-300`}
-                    style={pixelStyle}
+                    className={baseClass}
+                    style={style}
+                    onClick={() => router.push("/add")}
                   />
                 );
               }
@@ -130,18 +158,13 @@ export function PixelFlower({
               return (
                 <button
                   key={pixel.id}
-                  type="button"
+                  className={baseClass}
+                  style={style}
                   onClick={() => handlePixelClick(pixel)}
-                  aria-label={
-                    pixel.memory
-                      ? `${pixel.memory.title}, ${pixel.memory.category}`
-                      : `Memory pixel ${pixel.id + 1}`
-                  }
-                  className={pixelClassName}
-                  style={pixelStyle}
                 />
               );
             })}
+
           </div>
         </div>
       </div>
