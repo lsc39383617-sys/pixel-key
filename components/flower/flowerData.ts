@@ -8,124 +8,232 @@ export type MemoryData = {
   location: string;
 };
 
+export type FlowerPixelRegion = "petal" | "center-ring" | "center-hole";
+
 export type FlowerPixel = {
   id: number;
-  x: number;
-  y: number;
-  region: "center" | "petal";
-  petalIndex?: number;
+  row: number;
+  col: number;
+  petalIndex: number;
+  region: FlowerPixelRegion;
   state: PixelState;
-  color?: string;
-  memory?: MemoryData;
+  guideColor: string;
+  filledColor: string;
   uid?: string;
+  memory?: MemoryData;
 };
 
-export const FLOWER_PALETTE = [
-  "#FFB5BA",
-  "#FFCBA4",
-  "#B8E0D2",
-  "#AEC6CF",
-  "#C3B1E1",
-  "#FFD1DC",
-  "#B5EAD7",
-  "#FFDAC1",
-  "#F7CAC9",
-  "#92A8D1",
-  "#9AD0EC",
-  "#FFB7B2",
-] as const;
+export const FLOWER_GRID_SIZE = 25;
 
-const CENTER_YELLOW = "#FFE066";
+type PetalPalette = {
+  guide: string;
+  filled: string;
+};
 
-const PIXEL_LAYOUT: Array<{
-  id: number;
-  x: number;
-  y: number;
-  region: "center" | "petal";
-  petalIndex?: number;
-}> = [
-  { id: 0, x: 50, y: 50, region: "center" },
-  { id: 1, x: 44.94, y: 50, region: "center" },
-  { id: 2, x: 55.06, y: 50, region: "center" },
-  { id: 3, x: 50, y: 44.94, region: "center" },
-  { id: 4, x: 50, y: 55.06, region: "center" },
-  { id: 5, x: 44.94, y: 44.94, region: "center" },
-  { id: 6, x: 55.06, y: 44.94, region: "center" },
-  { id: 7, x: 44.94, y: 55.06, region: "center" },
-  { id: 8, x: 55.06, y: 55.06, region: "center" },
-  { id: 9, x: 22.86, y: 50, region: "petal", petalIndex: 0 },
-  { id: 10, x: 27.46, y: 56.44, region: "petal", petalIndex: 0 },
-  { id: 11, x: 27.46, y: 43.56, region: "petal", petalIndex: 0 },
-  { id: 12, x: 33.9, y: 61.04, region: "petal", petalIndex: 0 },
-  { id: 13, x: 33.9, y: 50, region: "petal", petalIndex: 0 },
-  { id: 14, x: 33.9, y: 38.96, region: "petal", petalIndex: 0 },
-  { id: 15, x: 42.18, y: 62.88, region: "petal", petalIndex: 0 },
-  { id: 16, x: 42.18, y: 54.14, region: "petal", petalIndex: 0 },
-  { id: 17, x: 42.18, y: 45.86, region: "petal", petalIndex: 0 },
-  { id: 18, x: 42.18, y: 37.12, region: "petal", petalIndex: 0 },
-  { id: 19, x: 50.92, y: 56.9, region: "petal", petalIndex: 0 },
-  { id: 20, x: 50.92, y: 50, region: "petal", petalIndex: 0 },
-  { id: 21, x: 50.92, y: 43.1, region: "petal", petalIndex: 0 },
-  { id: 22, x: 41.63, y: 24.24, region: "petal", petalIndex: 1 },
-  { id: 23, x: 36.94, y: 30.59, region: "petal", petalIndex: 1 },
-  { id: 24, x: 49.17, y: 26.63, region: "petal", petalIndex: 1 },
-  { id: 25, x: 34.54, y: 38.13, region: "petal", petalIndex: 1 },
-  { id: 26, x: 45.03, y: 34.73, region: "petal", petalIndex: 1 },
-  { id: 27, x: 55.52, y: 31.32, region: "petal", petalIndex: 1 },
-  { id: 28, x: 35.28, y: 46.6, region: "petal", petalIndex: 1 },
-  { id: 29, x: 43.65, y: 43.84, region: "petal", petalIndex: 1 },
-  { id: 30, x: 51.47, y: 41.35, region: "petal", petalIndex: 1 },
-  { id: 31, x: 59.84, y: 38.59, region: "petal", petalIndex: 1 },
-  { id: 32, x: 43.74, y: 53.04, region: "petal", petalIndex: 1 },
-  { id: 33, x: 50.28, y: 50.92, region: "petal", petalIndex: 1 },
-  { id: 34, x: 56.81, y: 48.8, region: "petal", petalIndex: 1 },
-  { id: 35, x: 71.9, y: 33.99, region: "petal", petalIndex: 2 },
-  { id: 36, x: 64.44, y: 31.51, region: "petal", petalIndex: 2 },
-  { id: 37, x: 71.99, y: 41.9, region: "petal", petalIndex: 2 },
-  { id: 38, x: 56.53, y: 31.6, region: "petal", petalIndex: 2 },
-  { id: 39, x: 62.97, y: 40.52, region: "petal", petalIndex: 2 },
-  { id: 40, x: 69.5, y: 49.45, region: "petal", petalIndex: 2 },
-  { id: 41, x: 48.71, y: 34.91, region: "petal", petalIndex: 2 },
-  { id: 42, x: 53.86, y: 42, region: "petal", petalIndex: 2 },
-  { id: 43, x: 58.74, y: 48.71, region: "petal", petalIndex: 2 },
-  { id: 44, x: 63.89, y: 55.8, region: "petal", petalIndex: 2 },
-  { id: 45, x: 45.22, y: 44.94, region: "petal", petalIndex: 2 },
-  { id: 46, x: 49.26, y: 50.46, region: "petal", petalIndex: 2 },
-  { id: 47, x: 53.31, y: 56.07, region: "petal", petalIndex: 2 },
-  { id: 48, x: 71.9, y: 66.01, region: "petal", petalIndex: 3 },
-  { id: 49, x: 71.99, y: 58.1, region: "petal", petalIndex: 3 },
-  { id: 50, x: 64.44, y: 68.49, region: "petal", petalIndex: 3 },
-  { id: 51, x: 69.5, y: 50.55, region: "petal", petalIndex: 3 },
-  { id: 52, x: 62.97, y: 59.48, region: "petal", petalIndex: 3 },
-  { id: 53, x: 56.53, y: 68.4, region: "petal", petalIndex: 3 },
-  { id: 54, x: 63.89, y: 44.2, region: "petal", petalIndex: 3 },
-  { id: 55, x: 58.74, y: 51.29, region: "petal", petalIndex: 3 },
-  { id: 56, x: 53.86, y: 58, region: "petal", petalIndex: 3 },
-  { id: 57, x: 48.71, y: 65.09, region: "petal", petalIndex: 3 },
-  { id: 58, x: 53.31, y: 43.93, region: "petal", petalIndex: 3 },
-  { id: 59, x: 49.26, y: 49.54, region: "petal", petalIndex: 3 },
-  { id: 60, x: 45.22, y: 55.06, region: "petal", petalIndex: 3 },
-  { id: 61, x: 41.63, y: 75.76, region: "petal", petalIndex: 4 },
-  { id: 62, x: 49.17, y: 73.37, region: "petal", petalIndex: 4 },
-  { id: 63, x: 36.94, y: 69.41, region: "petal", petalIndex: 4 },
-  { id: 64, x: 55.52, y: 68.68, region: "petal", petalIndex: 4 },
-  { id: 65, x: 45.03, y: 65.27, region: "petal", petalIndex: 4 },
-  { id: 66, x: 34.54, y: 61.87, region: "petal", petalIndex: 4 },
-  { id: 67, x: 59.84, y: 61.41, region: "petal", petalIndex: 4 },
-  { id: 68, x: 51.47, y: 58.65, region: "petal", petalIndex: 4 },
-  { id: 69, x: 43.65, y: 56.16, region: "petal", petalIndex: 4 },
-  { id: 70, x: 35.28, y: 53.4, region: "petal", petalIndex: 4 },
-  { id: 71, x: 56.81, y: 51.2, region: "petal", petalIndex: 4 },
-  { id: 72, x: 50.28, y: 49.08, region: "petal", petalIndex: 4 },
+export const PETAL_PALETTES: PetalPalette[] = [
+  {
+    guide: "#FBE7C7",
+    filled: "#F3A13B",
+  },
+  {
+    guide: "#F8F0D7",
+    filled: "#E8C46C",
+  },
+  {
+    guide: "#FADDD4",
+    filled: "#ED7651",
+  },
+  {
+    guide: "#DDF1EC",
+    filled: "#21AAA5",
+  },
+  {
+    guide: "#D5ECE7",
+    filled: "#159295",
+  },
 ];
 
-export const FLOWER_PIXELS: FlowerPixel[] = PIXEL_LAYOUT.map((slot) => ({
-  ...slot,
-  state: slot.region === "center" ? "filled" : "empty",
-  color: slot.region === "center" ? CENTER_YELLOW : undefined,
-}));
+const CENTER_RING_GUIDE = "#E9B4A5";
+const CENTER_RING_FILLED = "#C94C2C";
+const CENTER_HOLE_COLOR = "#FFFDF8";
 
-export const FLOWER_CENTER_COLOR = CENTER_YELLOW;
-export const FLOWER_TOTAL_COUNT = FLOWER_PIXELS.filter(
+const CENTER = (FLOWER_GRID_SIZE - 1) / 2;
+
+function getDistance(row: number, col: number) {
+  const dx = col - CENTER;
+  const dy = row - CENTER;
+
+  return Math.sqrt(dx * dx + dy * dy);
+}
+
+function getAngle(row: number, col: number) {
+  const dx = col - CENTER;
+  const dy = row - CENTER;
+
+  return Math.atan2(dy, dx);
+}
+
+/*
+  5엽 꽃 실루엣 공식.
+
+  반지름이 각도에 따라 커졌다 작아지면서
+  꽃잎 5개와 꽃잎 사이 오목한 홈이 만들어진다.
+*/
+function isInsideFlower(row: number, col: number) {
+  const distance = getDistance(row, col);
+  const angle = getAngle(row, col);
+
+  const baseRadius = 7.15;
+  const petalDepth = 3.15;
+
+  const maxRadius =
+    baseRadius +
+    petalDepth *
+      Math.cos(5 * (angle + Math.PI / 2));
+
+  return distance <= maxRadius;
+}
+
+function getPetalIndex(row: number, col: number) {
+  const angle = getAngle(row, col);
+
+  /*
+    위쪽 꽃잎을 0번으로 시작해 시계 방향 배치.
+  */
+  const normalized =
+    (angle + Math.PI / 2 + Math.PI * 2) %
+    (Math.PI * 2);
+
+  return (
+    Math.round(normalized / ((Math.PI * 2) / 5)) %
+    5
+  );
+}
+
+function getRegion(row: number, col: number): FlowerPixelRegion {
+  const distance = getDistance(row, col);
+
+  if (distance <= 2.15) {
+    return "center-hole";
+  }
+
+  if (distance <= 4.15) {
+    return "center-ring";
+  }
+
+  return "petal";
+}
+
+function buildFlowerPixels(): FlowerPixel[] {
+  const pixels: FlowerPixel[] = [];
+
+  let id = 0;
+
+  for (let row = 0; row < FLOWER_GRID_SIZE; row += 1) {
+    for (let col = 0; col < FLOWER_GRID_SIZE; col += 1) {
+      if (!isInsideFlower(row, col)) {
+        continue;
+      }
+
+      const region = getRegion(row, col);
+      const petalIndex = getPetalIndex(row, col);
+      const palette = PETAL_PALETTES[petalIndex];
+
+      if (region === "center-hole") {
+        pixels.push({
+          id: id++,
+          row,
+          col,
+          petalIndex,
+          region,
+          state: "filled",
+          guideColor: CENTER_HOLE_COLOR,
+          filledColor: CENTER_HOLE_COLOR,
+        });
+
+        continue;
+      }
+
+      if (region === "center-ring") {
+        pixels.push({
+          id: id++,
+          row,
+          col,
+          petalIndex,
+          region,
+          state: "filled",
+          guideColor: CENTER_RING_GUIDE,
+          filledColor: CENTER_RING_FILLED,
+        });
+
+        continue;
+      }
+
+      pixels.push({
+        id: id++,
+        row,
+        col,
+        petalIndex,
+        region,
+        state: "empty",
+        guideColor: palette.guide,
+        filledColor: palette.filled,
+      });
+    }
+  }
+
+  return pixels;
+}
+
+export const FLOWER_PIXELS = buildFlowerPixels();
+
+export const FLOWER_MEMORY_SLOTS = FLOWER_PIXELS.filter(
   (pixel) => pixel.region === "petal",
-).length;
+);
+
+/*
+  추억이 적어도 한쪽부터 몰리지 않게
+  5개 꽃잎을 번갈아가며 채운다.
+*/
+const slotsByPetal = PETAL_PALETTES.map((_, petalIndex) =>
+  FLOWER_MEMORY_SLOTS.filter(
+    (pixel) => pixel.petalIndex === petalIndex,
+  ).sort((a, b) => {
+    const distanceA = getDistance(a.row, a.col);
+    const distanceB = getDistance(b.row, b.col);
+
+    return distanceB - distanceA;
+  }),
+);
+
+export const ORDERED_FLOWER_MEMORY_SLOTS: FlowerPixel[] = [];
+
+let slotIndex = 0;
+
+while (true) {
+  let added = false;
+
+  for (
+    let petalIndex = 0;
+    petalIndex < slotsByPetal.length;
+    petalIndex += 1
+  ) {
+    const slot = slotsByPetal[petalIndex][slotIndex];
+
+    if (!slot) {
+      continue;
+    }
+
+    ORDERED_FLOWER_MEMORY_SLOTS.push(slot);
+    added = true;
+  }
+
+  if (!added) {
+    break;
+  }
+
+  slotIndex += 1;
+}
+
+export const FLOWER_TOTAL_COUNT =
+  FLOWER_MEMORY_SLOTS.length;

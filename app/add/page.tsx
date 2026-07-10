@@ -1,5 +1,5 @@
 "use client";
-
+import { FLOWER_TOTAL_COUNT } from "@/components/flower/flowerData";
 import { ChangeEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createPixel, uploadImage } from "@/lib/pixel";
