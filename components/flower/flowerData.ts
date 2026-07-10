@@ -20,7 +20,7 @@ export type FlowerPixel = {
   uid?: string;
 };
 
-const PASTEL_PALETTE = [
+export const FLOWER_PALETTE = [
   "#FFB5BA",
   "#FFCBA4",
   "#B8E0D2",
@@ -33,17 +33,10 @@ const PASTEL_PALETTE = [
   "#92A8D1",
   "#9AD0EC",
   "#FFB7B2",
-  "#C7CEEA",
-  "#FF9AA2",
-  "#E2F0CB",
-  "#D4A5A5",
-  "#FDFD96",
-  "#FFEAA7",
 ] as const;
 
 const CENTER_YELLOW = "#FFE066";
 
-/** Precomputed layout — avoids cross-environment floating-point hydration mismatches. */
 const PIXEL_LAYOUT: Array<{
   id: number;
   x: number;
@@ -126,176 +119,13 @@ const PIXEL_LAYOUT: Array<{
   { id: 72, x: 50.28, y: 49.08, region: "petal", petalIndex: 4 },
 ];
 
-const SAMPLE_MEMORIES: MemoryData[] = [
-  {
-    title: "Morning Croissant",
-    category: "Food",
-    description:
-      "Buttery, flaky perfection from the corner bakery on a slow Sunday morning.",
-    location: "Le Petit Four, Paris",
-  },
-  {
-    title: "Cherry Blossom Walk",
-    category: "Place",
-    description:
-      "Pink petals drifting like snow along the river — the softest spring afternoon.",
-    location: "Meguro River, Tokyo",
-  },
-  {
-    title: "First Concert Together",
-    category: "Memory",
-    description:
-      "Dancing under string lights as our favorite song played for the encore.",
-    location: "Brooklyn Mirage, NYC",
-  },
-  {
-    title: "Ramen at Midnight",
-    category: "Food",
-    description:
-      "Rich tonkotsu broth, perfect noodles, and the steam fogging up the window.",
-    location: "Ichiran, Shibuya",
-  },
-  {
-    title: "Cliffside Sunset",
-    category: "Place",
-    description:
-      "Golden light spilling over white-washed villages and the endless Aegean blue.",
-    location: "Oia, Santorini",
-  },
-  {
-    title: "Birthday Surprise",
-    category: "Memory",
-    description:
-      "Friends hiding behind the couch, confetti cannon ready — pure joy.",
-    location: "Home, Seoul",
-  },
-  {
-    title: "Matcha Latte Art",
-    category: "Food",
-    description:
-      "Ceremonial grade whisked to a jade froth with the cutest leaf pattern.",
-    location: "Higashiya, Kyoto",
-  },
-  {
-    title: "Hidden Bookshop",
-    category: "Place",
-    description:
-      "Dusty shelves, creaky floorboards, and a cat napping on poetry collections.",
-    location: "Shakespeare and Company",
-  },
-  {
-    title: "Road Trip Playlist",
-    category: "Memory",
-    description:
-      "Windows down, volume up, singing off-key through the mountain pass.",
-    location: "Pacific Coast Highway",
-  },
-  {
-    title: "Street Tacos",
-    category: "Food",
-    description:
-      "Al pastor with pineapple, lime squeezed tight, salsa verde dripping down.",
-    location: "El Vilsito, CDMX",
-  },
-  {
-    title: "Lavender Fields",
-    category: "Place",
-    description:
-      "Purple rows stretching to the horizon, buzzing bees, and honey-sweet air.",
-    location: "Provence, France",
-  },
-  {
-    title: "Graduation Day",
-    category: "Memory",
-    description:
-      "Cap tossed high, tears of pride, and a photo that still makes us smile.",
-    location: "Stanford University",
-  },
-  {
-    title: "Dim Sum Brunch",
-    category: "Food",
-    description:
-      "Steaming baskets of har gow and char siu bao shared family-style.",
-    location: "Tim Ho Wan, Hong Kong",
-  },
-  {
-    title: "Northern Lights",
-    category: "Place",
-    description:
-      "Emerald ribbons dancing across an ink-black Arctic sky — utterly silent.",
-    location: "Tromsø, Norway",
-  },
-  {
-    title: "First Apartment",
-    category: "Memory",
-    description:
-      "Paint-splattered floors, mismatched furniture, and dreams on every wall.",
-    location: "Williamsburg, Brooklyn",
-  },
-  {
-    title: "Gelato by the Duomo",
-    category: "Food",
-    description:
-      "Pistachio and stracciatella melting fast in the warm Italian sun.",
-    location: "Florence, Italy",
-  },
-  {
-    title: "Rainforest Canopy",
-    category: "Place",
-    description:
-      "Mist rising through ancient trees, toucans calling, the world felt brand new.",
-    location: "Monteverde, Costa Rica",
-  },
-  {
-    title: "New Year's Kiss",
-    category: "Memory",
-    description:
-      "Fireworks bursting over the harbor as the clock struck twelve.",
-    location: "Sydney Harbour",
-  },
-];
+export const FLOWER_PIXELS: FlowerPixel[] = PIXEL_LAYOUT.map((slot) => ({
+  ...slot,
+  state: slot.region === "center" ? "filled" : "empty",
+  color: slot.region === "center" ? CENTER_YELLOW : undefined,
+}));
 
-function buildFlowerPixels(): FlowerPixel[] {
-  const petalSlots: FlowerPixel[] = PIXEL_LAYOUT.filter(
-    (slot) => slot.region === "petal",
-  ).map((slot) => ({
-    ...slot,
-    state: "empty" as const,
-  }));
-
-  const centerPixels: FlowerPixel[] = PIXEL_LAYOUT.filter(
-    (slot) => slot.region === "center",
-  ).map((slot) => ({
-    ...slot,
-    state: "filled" as const,
-    color: CENTER_YELLOW,
-  }));
-
-  const petalGroups: FlowerPixel[][] = [[], [], [], [], []];
-  for (const slot of petalSlots) {
-    petalGroups[slot.petalIndex ?? 0].push(slot);
-  }
-
-  let memoryIndex = 0;
-
-  for (let round = 0; memoryIndex < SAMPLE_MEMORIES.length; round++) {
-    for (let petal = 0; petal < 5 && memoryIndex < SAMPLE_MEMORIES.length; petal++) {
-      const emptySlot = petalGroups[petal].find((s) => s.state === "empty");
-      if (!emptySlot) continue;
-      emptySlot.state = "filled";
-      emptySlot.color = PASTEL_PALETTE[memoryIndex % PASTEL_PALETTE.length];
-      emptySlot.memory = SAMPLE_MEMORIES[memoryIndex++];
-    }
-  }
-
-  return [...centerPixels, ...petalSlots];
-}
-
-export const FLOWER_PIXELS = buildFlowerPixels();
 export const FLOWER_CENTER_COLOR = CENTER_YELLOW;
-export const FLOWER_FILLED_COUNT = FLOWER_PIXELS.filter(
-  (p) => p.region === "petal" && p.state === "filled",
-).length;
 export const FLOWER_TOTAL_COUNT = FLOWER_PIXELS.filter(
-  (p) => p.region === "petal",
+  (pixel) => pixel.region === "petal",
 ).length;

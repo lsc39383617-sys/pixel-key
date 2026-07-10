@@ -34,45 +34,41 @@ export async function createPixel(
   name: string,
   description: string,
   image: string,
-) {
+  visitedAt: string,
+): Promise<Pixel> {
   const uid = crypto.randomUUID().replace(/-/g, "").slice(0, 12);
-
-  console.log("before insert", {
-    uid,
-    name,
-    description,
-    image,
-  });
 
   const { data, error } = await supabase
     .from("pixels")
     .insert({
       uid,
-      name,
-      description,
-      image,
+      name: name.trim(),
+      description: description.trim(),
+      image: image || null,
+      visited_at: visitedAt || null,
     })
     .select()
     .single();
-
-  console.log("insert result", { data, error });
 
   if (error) {
     console.error("createPixel error:", error);
     throw error;
   }
 
-  return data;
+  return data as Pixel;
 }
 
-export async function uploadImage(file: File) {
+export async function uploadImage(file: File): Promise<string> {
   const extension = file.name.split(".").pop()?.toLowerCase() || "png";
-
-const fileName = `${crypto.randomUUID()}.${extension}`;
+  const fileName = `pixels/${crypto.randomUUID()}.${extension}`;
 
   const { error } = await supabase.storage
     .from("pixel-images")
-    .upload(fileName, file);
+    .upload(fileName, file, {
+      cacheControl: "3600",
+      upsert: false,
+      contentType: file.type || undefined,
+    });
 
   if (error) {
     console.error("uploadImage error:", error);

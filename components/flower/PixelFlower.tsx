@@ -1,16 +1,14 @@
 "use client";
-console.log("🔥 PixelFlower render", dbPixels.length);
-import { useCallback, useEffect, useMemo, useState } from "react";
+
+import { useMemo } from "react";
 import { useRouter } from "next/navigation";
+import { Pixel } from "@/types/pixel";
 import {
   FLOWER_CENTER_COLOR,
-  FLOWER_FILLED_COUNT,
+  FLOWER_PALETTE,
   FLOWER_PIXELS,
-  FLOWER_TOTAL_COUNT,
   type FlowerPixel,
 } from "./flowerData";
-import { MemoryModal } from "./MemoryModal";
-import { Pixel } from "@/types/pixel";
 
 type PixelFlowerProps = {
   pixels?: FlowerPixel[];
@@ -20,8 +18,16 @@ type PixelFlowerProps = {
 };
 
 const sizeStyles = {
-  sm: { container: "h-[200px] w-[200px]", pixel: "h-3.5 w-3.5", ring: "h-2 w-5" },
-  md: { container: "h-[260px] w-[260px]", pixel: "h-[18px] w-[18px]", ring: "h-2.5 w-6" },
+  sm: {
+    container: "h-[200px] w-[200px]",
+    pixel: "h-3.5 w-3.5",
+    ring: "h-2 w-5",
+  },
+  md: {
+    container: "h-[260px] w-[260px]",
+    pixel: "h-[18px] w-[18px]",
+    ring: "h-2.5 w-6",
+  },
   lg: {
     container: "h-[300px] w-[300px] sm:h-[320px] sm:w-[320px]",
     pixel: "h-[22px] w-[22px] sm:h-6 sm:w-6",
@@ -35,147 +41,111 @@ export function PixelFlower({
   size = "lg",
   className = "",
 }: PixelFlowerProps) {
-  console.log("🔥 PixelFlower render");
-console.log("dbPixels:", dbPixels);
-  console.log("🔥 PixelFlower render");
-  const styles = sizeStyles[size];
   const router = useRouter();
+  const styles = sizeStyles[size];
 
-  const [clickedId, setClickedId] = useState<number | null>(null);
-  const [selectedPixel, setSelectedPixel] = useState<FlowerPixel | null>(null);
-
-  const handlePixelClick = useCallback(
-    (pixel: FlowerPixel) => {
-      if (pixel.region !== "petal") return;
-
-      if (pixel.uid) {
-        router.push(`/pixel/${pixel.uid}`);
-        return;
-      }
-
-      if (pixel.state !== "filled" || !pixel.memory) return;
-
-      setClickedId(pixel.id);
-      setSelectedPixel(pixel);
-    },
-    [router]
-  );
-
-  useEffect(() => {
-    if (clickedId === null) return;
-    const timer = window.setTimeout(() => setClickedId(null), 300);
-    return () => window.clearTimeout(timer);
-  }, [clickedId]);
-
-  const closeModal = useCallback(() => setSelectedPixel(null), []);
-
-  // ✅ 핵심: 데이터 합성
   const displayPixels = useMemo(() => {
-    const copy = pixels.map((p) => ({ ...p }));
-  
-    const petalPixels = copy.filter((p) => p.region === "petal");
-  
-    // 🔥 DB는 uid 기준으로만 매핑
-    const used = new Set<number>();
-  
-    dbPixels.forEach((dbPixel) => {
-      const target = petalPixels.find((p) => {
-        if (used.has(p.id)) return false;
-        return p.region === "petal" && p.uid == null;
-      });
-  
-      if (!target) return;
-  
-      used.add(target.id);
-  
+    const copiedPixels = pixels.map((pixel) => ({ ...pixel }));
+    const petalSlots = copiedPixels.filter(
+      (pixel) => pixel.region === "petal",
+    );
+
+    dbPixels.slice(0, petalSlots.length).forEach((dbPixel, index) => {
+      const target = petalSlots[index];
+
       target.state = "filled";
       target.uid = dbPixel.uid;
-      target.color = "#FFB5BA";
-  
+      target.color = FLOWER_PALETTE[index % FLOWER_PALETTE.length];
       target.memory = {
         title: dbPixel.name,
         category: "Memory",
-        description: dbPixel.description,
+        description: dbPixel.description ?? "",
         location: "",
       };
     });
-  
-    return copy;
-  }, [pixels, dbPixels]); 
 
-  const centerPixels = displayPixels.filter((p) => p.region === "center");
-  const petalPixels = displayPixels.filter((p) => p.region === "petal");
+    return copiedPixels;
+  }, [dbPixels, pixels]);
+
+  const centerPixels = displayPixels.filter(
+    (pixel) => pixel.region === "center",
+  );
+  const petalPixels = displayPixels.filter(
+    (pixel) => pixel.region === "petal",
+  );
 
   return (
-    <>
-      <div className={`relative mx-auto ${className}`}>
-        <div
-          className="pointer-events-none absolute inset-0 -z-10 scale-110 rounded-full bg-gradient-to-b from-rose-200/40 via-amber-100/30 to-violet-200/40 blur-3xl"
-        />
+    <div
+      className={`relative mx-auto ${className}`}
+      aria-label={`${Math.min(dbPixels.length, petalPixels.length)}개의 추억이 채워진 꽃`}
+    >
+      <div
+        className="pointer-events-none absolute inset-0 -z-10 scale-110 rounded-full bg-gradient-to-b from-rose-200/40 via-amber-100/30 to-violet-200/40 blur-3xl"
+        aria-hidden
+      />
 
-        <div className="rounded-[2.25rem] bg-white/50 p-1">
-          <div className={`relative ${styles.container} rounded-[2rem] bg-white/80`}>
-            
-            {/* center */}
-            {centerPixels.map((pixel) => (
-              <div
+      <div className="absolute left-1/2 top-[6%] z-20 -translate-x-1/2 -translate-y-1/2">
+        <div
+          className={`${styles.ring} rounded-full border-[3px] border-stone-300/80 bg-gradient-to-b from-white via-stone-50 to-stone-200/70 shadow-sm`}
+          aria-hidden
+        />
+        <div
+          className="absolute left-1/2 top-full h-4 w-0.5 -translate-x-1/2 bg-gradient-to-b from-stone-300/80 to-stone-300/20"
+          aria-hidden
+        />
+      </div>
+
+      <div className="rounded-[2.25rem] bg-white/50 p-1 shadow-[0_16px_48px_-12px_rgba(0,0,0,0.14)] ring-1 ring-white/90 backdrop-blur-md">
+        <div
+          className={`relative ${styles.container} rounded-[2rem] bg-gradient-to-b from-white/90 via-white/70 to-stone-50/50`}
+        >
+          {centerPixels.map((pixel) => (
+            <div
+              key={pixel.id}
+              className={`absolute -translate-x-1/2 -translate-y-1/2 rounded-full ${styles.pixel} shadow-inner`}
+              style={{
+                left: `${pixel.x}%`,
+                top: `${pixel.y}%`,
+                backgroundColor: FLOWER_CENTER_COLOR,
+              }}
+              aria-hidden
+            />
+          ))}
+
+          {petalPixels.map((pixel) => {
+            const isFilled = pixel.state === "filled" && Boolean(pixel.uid);
+
+            return (
+              <button
                 key={pixel.id}
-                className={`absolute -translate-x-1/2 -translate-y-1/2 rounded-full ${styles.pixel}`}
+                type="button"
+                onClick={() =>
+                  isFilled
+                    ? router.push(`/pixel/${pixel.uid}`)
+                    : router.push("/add")
+                }
+                aria-label={
+                  isFilled && pixel.memory
+                    ? `${pixel.memory.title} 열기`
+                    : "새 Pixel 만들기"
+                }
+                className={`absolute -translate-x-1/2 -translate-y-1/2 rounded-full ${styles.pixel} transition duration-200 hover:z-10 hover:scale-[1.18] active:scale-90 ${
+                  isFilled
+                    ? "shadow-[inset_0_2px_4px_rgba(255,255,255,0.45),inset_0_-3px_6px_rgba(0,0,0,0.1),0_3px_8px_rgba(0,0,0,0.08)]"
+                    : "bg-stone-200/70 shadow-inner hover:ring-2 hover:ring-pink-300"
+                }`}
                 style={{
                   left: `${pixel.x}%`,
                   top: `${pixel.y}%`,
-                  backgroundColor: FLOWER_CENTER_COLOR,
+                  ...(isFilled && pixel.color
+                    ? { backgroundColor: pixel.color }
+                    : {}),
                 }}
               />
-            ))}
-
-            {/* petal */}
-            {petalPixels.map((pixel) => {
-              const isFilled = pixel.state === "filled";
-              const isClicked = clickedId === pixel.id;
-
-              const baseClass = `absolute -translate-x-1/2 -translate-y-1/2 rounded-full ${styles.pixel}`;
-
-              const style = {
-                left: `${pixel.x}%`,
-                top: `${pixel.y}%`,
-                ...(isFilled && pixel.color
-                  ? { backgroundColor: pixel.color }
-                  : {}),
-              };
-
-              if (!isFilled) {
-                return (
-                  <button
-                    key={pixel.id}
-                    className={baseClass}
-                    style={style}
-                    onClick={() => router.push("/add")}
-                  />
-                );
-              }
-
-              return (
-                <button
-                  key={pixel.id}
-                  className={baseClass}
-                  style={style}
-                  onClick={() => handlePixelClick(pixel)}
-                />
-              );
-            })}
-
-          </div>
+            );
+          })}
         </div>
       </div>
-
-      {selectedPixel?.memory && selectedPixel.color && (
-        <MemoryModal
-          memory={selectedPixel.memory}
-          color={selectedPixel.color}
-          onClose={closeModal}
-        />
-      )}
-    </>
+    </div>
   );
 }
