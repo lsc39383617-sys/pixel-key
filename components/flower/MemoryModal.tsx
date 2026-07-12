@@ -21,16 +21,12 @@ const categoryStyles: Record<
 
 export function MemoryModal({ memory, color, onClose }: MemoryModalProps) {
   const closeRef = useRef<HTMLButtonElement>(null);
-  const [mounted, setMounted] = useState(false);
   const [closing, setClosing] = useState(false);
 
   const handleClose = useCallback(() => {
     setClosing(true);
   }, []);
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   useEffect(() => {
     if (!closing) return;
@@ -51,7 +47,7 @@ export function MemoryModal({ memory, color, onClose }: MemoryModalProps) {
     };
   }, [handleClose]);
 
-  if (!mounted) return null;
+  if (typeof document === "undefined") return null;
 
   const cat = categoryStyles[memory.category];
 

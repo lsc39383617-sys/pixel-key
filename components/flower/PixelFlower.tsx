@@ -49,15 +49,14 @@ export function PixelFlower({
   const styles = sizeStyles[size];
 
   const displayPixels = useMemo(() => {
-    const copiedPixels = pixels.map((pixel) => ({
-      ...pixel,
-      uid: undefined,
-      memory: undefined,
-      state:
-        pixel.region === "petal"
-          ? ("empty" as const)
-          : ("filled" as const),
-    }));
+    const copiedPixels: FlowerPixel[] = pixels.map(
+      (pixel): FlowerPixel => ({
+        ...pixel,
+        uid: undefined,
+        memory: undefined,
+        state: pixel.region === "petal" ? "empty" : "filled",
+      }),
+    );
 
     const orderedKeys =
       ORDERED_FLOWER_MEMORY_SLOTS.map(
@@ -73,8 +72,7 @@ export function PixelFlower({
         ),
       )
       .filter(
-        (pixel): pixel is FlowerPixel =>
-          Boolean(pixel),
+        (pixel): pixel is FlowerPixel => pixel !== undefined,
       );
 
     dbPixels

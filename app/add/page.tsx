@@ -1,5 +1,5 @@
 "use client";
-import { FLOWER_TOTAL_COUNT } from "@/components/flower/flowerData";
+import Image from "next/image";
 import { ChangeEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createPixel, uploadImage } from "@/lib/pixel";
@@ -129,9 +129,12 @@ export default function AddPixelPage() {
       />
 
       {preview && (
-        <img
+        <Image
           src={preview}
           alt="선택한 사진 미리보기"
+          width={800}
+          height={560}
+          unoptimized
           className="mb-6 h-56 w-full rounded-2xl object-cover shadow-sm"
         />
       )}
