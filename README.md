@@ -1,36 +1,26 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Pixel Key
 
-## Getting Started
+장소, 사진, 날짜, 감정을 Pixel로 기록하고 한 송이 꽃으로 채워가는 Next.js 앱입니다.
 
-First, run the development server:
+## 현재 기능
+
+- Supabase Pixel 저장 및 조회
+- Supabase Storage 사진 업로드
+- 방문 날짜와 카테고리
+- 카카오맵 키워드 장소 검색
+- 현재 위치 가져오기 및 주소 변환
+- 장소명, 주소, 위도·경도 저장
+- 상세 페이지 지도와 카카오맵 링크
+- 홈 검색과 카테고리 필터
+- Pixel Flower 진행률
+- 모바일 반응형 UI
+
+## 시작
 
 ```bash
+cp .env.example .env.local
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+데이터베이스 설정과 Vercel 배포는 `DEPLOY-KAKAO.md`를 확인하세요.

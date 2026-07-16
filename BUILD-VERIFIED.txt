@@ -1,0 +1,11 @@
+Pixel Key Kakao Map Beta
+Verified: 2026-07-16
+
+Passed:
+- npm run lint
+- npm run build (Next.js 16.2.9)
+- production server smoke test for / and /add
+
+External connection note:
+- Kakao Maps requires a valid NEXT_PUBLIC_KAKAO_MAP_KEY and registered JavaScript SDK domains.
+- Supabase requires the existing project URL/anon key and execution of supabase-migration.sql.

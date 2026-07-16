@@ -2,9 +2,9 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Pixel Bloom — Grow Your Color",
+  title: "Pixel Key — 장소와 추억을 꽃으로",
   description:
-    "Collect your favorite places, food and memories into one beautiful flower.",
+    "좋아하는 장소, 사진, 날짜와 추억을 Pixel로 기록하고 한 송이 꽃으로 모아보세요.",
 };
 
 export const viewport: Viewport = {

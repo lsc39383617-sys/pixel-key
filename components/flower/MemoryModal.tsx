@@ -27,7 +27,6 @@ export function MemoryModal({ memory, color, onClose }: MemoryModalProps) {
     setClosing(true);
   }, []);
 
-
   useEffect(() => {
     if (!closing) return;
     const timer = window.setTimeout(onClose, 260);
