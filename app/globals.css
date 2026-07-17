@@ -30,11 +30,11 @@ body {
 
 .bg-warm-gradient {
   background:
-    radial-gradient(ellipse 90% 55% at 50% -5%, rgba(255, 200, 180, 0.55), transparent),
-    radial-gradient(ellipse 70% 45% at 95% 15%, rgba(220, 200, 255, 0.35), transparent),
-    radial-gradient(ellipse 60% 40% at 5% 55%, rgba(255, 220, 180, 0.4), transparent),
-    radial-gradient(ellipse 50% 30% at 80% 85%, rgba(255, 180, 200, 0.2), transparent),
-    linear-gradient(180deg, #fef9f4 0%, #f8efe6 40%, #f2e8de 100%);
+    radial-gradient(ellipse 92% 50% at 50% -6%, rgba(255, 181, 166, 0.48), transparent),
+    radial-gradient(ellipse 75% 42% at 100% 18%, rgba(213, 196, 255, 0.34), transparent),
+    radial-gradient(ellipse 65% 42% at -5% 55%, rgba(255, 214, 171, 0.38), transparent),
+    radial-gradient(ellipse 52% 33% at 78% 88%, rgba(184, 229, 211, 0.23), transparent),
+    linear-gradient(180deg, #fffaf6 0%, #f9f0e8 45%, #f2e8df 100%);
 }
 
 .bg-warm-gradient::before {
@@ -42,31 +42,46 @@ body {
   position: fixed;
   inset: 0;
   pointer-events: none;
-  opacity: 0.35;
+  opacity: 0.28;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   background-size: 128px 128px;
   mix-blend-mode: overlay;
 }
 
 @keyframes fade-up {
-  from {
-    opacity: 0;
-    transform: translateY(12px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes float {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-6px);
-  }
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
+@keyframes flower-float {
+  0%, 100% { transform: translateY(0) rotate(-0.35deg); }
+  50% { transform: translateY(-7px) rotate(0.35deg); }
+}
+
+@keyframes bloom-pulse {
+  0%, 100% { transform: scale(0.985); filter: saturate(0.96); }
+  50% { transform: scale(1.015); filter: saturate(1.08); }
+}
+
+@keyframes flower-sparkle {
+  0%, 100% { opacity: 0.25; transform: scale(0.65) rotate(0deg); }
+  45% { opacity: 1; transform: scale(1.1) rotate(90deg); }
+  70% { opacity: 0.5; transform: scale(0.8) rotate(160deg); }
+}
+
+@keyframes leaf-sway {
+  0%, 100% { transform: rotate(-28deg); }
+  50% { transform: rotate(-23deg); }
+}
+
+@keyframes leaf-sway-reverse {
+  0%, 100% { transform: rotate(31deg); }
+  50% { transform: rotate(26deg); }
 }
 
 .animate-fade-up {
@@ -77,32 +92,35 @@ body {
   animation: float 5s ease-in-out infinite;
 }
 
-.animation-delay-100 {
-  animation-delay: 100ms;
+.animate-flower-float {
+  animation: flower-float 6.5s ease-in-out infinite;
 }
 
-.animation-delay-200 {
-  animation-delay: 200ms;
+.animate-bloom-pulse {
+  animation: bloom-pulse 5.5s ease-in-out infinite;
 }
 
-.animation-delay-300 {
-  animation-delay: 300ms;
+.animate-flower-sparkle {
+  animation: flower-sparkle 3.2s ease-in-out infinite;
 }
 
-.animation-delay-400 {
-  animation-delay: 400ms;
+.animate-leaf-sway {
+  animation: leaf-sway 4.8s ease-in-out infinite;
 }
+
+.animate-leaf-sway-reverse {
+  animation: leaf-sway-reverse 5.3s ease-in-out infinite;
+}
+
+.animation-delay-100 { animation-delay: 100ms; }
+.animation-delay-200 { animation-delay: 200ms; }
+.animation-delay-300 { animation-delay: 300ms; }
+.animation-delay-400 { animation-delay: 400ms; }
 
 @keyframes pixel-pop {
-  0% {
-    scale: 1;
-  }
-  40% {
-    scale: 1.35;
-  }
-  100% {
-    scale: 1;
-  }
+  0% { scale: 1; }
+  40% { scale: 1.35; }
+  100% { scale: 1; }
 }
 
 .animate-pixel-pop {
@@ -110,23 +128,13 @@ body {
 }
 
 @keyframes modal-backdrop {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 @keyframes modal-slide {
-  from {
-    opacity: 0;
-    transform: translateY(24px) scale(0.96);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
+  from { opacity: 0; transform: translateY(24px) scale(0.96); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 .animate-modal-backdrop {
@@ -138,34 +146,18 @@ body {
 }
 
 @keyframes modal-backdrop-out {
-  from {
-    opacity: 1;
-  }
-  to {
-    opacity: 0;
-  }
+  from { opacity: 1; }
+  to { opacity: 0; }
 }
 
 @keyframes modal-slide-out {
-  from {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-  to {
-    opacity: 0;
-    transform: translateY(16px) scale(0.97);
-  }
+  from { opacity: 1; transform: translateY(0) scale(1); }
+  to { opacity: 0; transform: translateY(16px) scale(0.97); }
 }
 
 @keyframes modal-content {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .animate-modal-backdrop-out {
@@ -178,4 +170,15 @@ body {
 
 .animate-modal-content {
   animation: modal-content 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-flower-float,
+  .animate-bloom-pulse,
+  .animate-flower-sparkle,
+  .animate-leaf-sway,
+  .animate-leaf-sway-reverse,
+  .animate-fade-up {
+    animation: none !important;
+  }
 }
