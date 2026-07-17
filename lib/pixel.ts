@@ -1,4 +1,3 @@
-import { supabase } from "./supabase";
 import type { CreatePixelInput, Pixel } from "@/types/pixel";
 
 function formatSupabaseError(error: {
@@ -96,33 +95,78 @@ async function readApiError(response: Response) {
   }
 }
 
-export async function getPixels(): Promise<Pixel[]> {
-  const { data, error } = await supabase
-    .from("pixels")
-    .select("*")
-    .order("created_at", { ascending: false });
+function createReadHeaders(anonKey: string): HeadersInit {
+  return {
+    apikey: anonKey,
+    Authorization: `Bearer ${anonKey}`,
+    Accept: "application/json",
+  };
+}
 
-  if (error) {
-    console.error("getPixels error:", error);
-    throw new Error(`Pixel 목록을 불러오지 못했습니다: ${formatSupabaseError(error)}`);
+export async function getPixels(): Promise<Pixel[]> {
+  const { url, anonKey } = getDirectSupabaseConfig();
+  const endpoint = new URL(`${url}/rest/v1/pixels`);
+  endpoint.searchParams.set("select", "*");
+  endpoint.searchParams.set("order", "created_at.desc");
+
+  let response: Response;
+
+  try {
+    response = await fetch(endpoint.toString(), {
+      method: "GET",
+      headers: createReadHeaders(anonKey),
+      cache: "no-store",
+    });
+  } catch (error) {
+    console.error("getPixels request error:", error);
+    throw new Error(
+      `Pixel 목록 요청을 만들지 못했습니다: ${
+        error instanceof Error ? error.message : "알 수 없는 오류"
+      }`,
+    );
   }
 
-  return (data ?? []) as Pixel[];
+  if (!response.ok) {
+    const apiError = await readApiError(response);
+    console.error("getPixels API error:", apiError);
+    throw new Error(`Pixel 목록을 불러오지 못했습니다: ${formatSupabaseError(apiError)}`);
+  }
+
+  return (await response.json()) as Pixel[];
 }
 
 export async function getPixel(uid: string): Promise<Pixel | null> {
-  const { data, error } = await supabase
-    .from("pixels")
-    .select("*")
-    .eq("uid", uid)
-    .maybeSingle();
+  const { url, anonKey } = getDirectSupabaseConfig();
+  const endpoint = new URL(`${url}/rest/v1/pixels`);
+  endpoint.searchParams.set("select", "*");
+  endpoint.searchParams.set("uid", `eq.${uid}`);
+  endpoint.searchParams.set("limit", "1");
 
-  if (error) {
-    console.error("getPixel error:", error);
-    throw new Error(`Pixel을 불러오지 못했습니다: ${formatSupabaseError(error)}`);
+  let response: Response;
+
+  try {
+    response = await fetch(endpoint.toString(), {
+      method: "GET",
+      headers: createReadHeaders(anonKey),
+      cache: "no-store",
+    });
+  } catch (error) {
+    console.error("getPixel request error:", error);
+    throw new Error(
+      `Pixel 조회 요청을 만들지 못했습니다: ${
+        error instanceof Error ? error.message : "알 수 없는 오류"
+      }`,
+    );
   }
 
-  return data as Pixel | null;
+  if (!response.ok) {
+    const apiError = await readApiError(response);
+    console.error("getPixel API error:", apiError);
+    throw new Error(`Pixel을 불러오지 못했습니다: ${formatSupabaseError(apiError)}`);
+  }
+
+  const data = (await response.json()) as Pixel[];
+  return data[0] ?? null;
 }
 
 export async function createPixel(input: CreatePixelInput): Promise<Pixel> {
