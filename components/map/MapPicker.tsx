@@ -3,8 +3,10 @@
 import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import { loadKakaoMaps } from "@/lib/kakao-map";
 import type {
+  KakaoGeocoderService,
   KakaoGlobal,
   KakaoMapInstance,
+  KakaoMapMouseEvent,
   KakaoMarkerInstance,
   KakaoPlaceResult,
   KakaoPlacesService,
@@ -35,10 +37,15 @@ function placeResultToSelection(place: KakaoPlaceResult): PlaceSelection {
 export function MapPicker({ value, onChange }: MapPickerProps) {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const initialValueRef = useRef(value);
+  const onChangeRef = useRef(onChange);
   const kakaoRef = useRef<KakaoGlobal | null>(null);
   const mapRef = useRef<KakaoMapInstance | null>(null);
   const markerRef = useRef<KakaoMarkerInstance | null>(null);
   const placesRef = useRef<KakaoPlacesService | null>(null);
+  const geocoderRef = useRef<KakaoGeocoderService | null>(null);
+  const mapClickHandlerRef = useRef<((event: KakaoMapMouseEvent) => void) | null>(
+    null,
+  );
 
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<KakaoPlaceResult[]>([]);
@@ -46,6 +53,10 @@ export function MapPicker({ value, onChange }: MapPickerProps) {
   const [mapError, setMapError] = useState("");
   const [searching, setSearching] = useState(false);
   const [locating, setLocating] = useState(false);
+
+  useEffect(() => {
+    onChangeRef.current = onChange;
+  }, [onChange]);
 
   const moveMarker = useCallback((lat: number, lng: number) => {
     const kakao = kakaoRef.current;
@@ -64,6 +75,40 @@ export function MapPicker({ value, onChange }: MapPickerProps) {
       markerRef.current = new kakao.maps.Marker({ position, map });
     }
   }, []);
+
+  const selectCoordinate = useCallback(
+    (lat: number, lng: number, fallbackName = "지도에서 선택한 위치") => {
+      const kakao = kakaoRef.current;
+      const geocoder = geocoderRef.current;
+
+      if (!kakao || !geocoder) return;
+
+      moveMarker(lat, lng);
+      geocoder.coord2Address(lng, lat, (data, status) => {
+        const result = data[0];
+        const roadAddress = result?.road_address?.address_name ?? "";
+        const address = result?.address?.address_name ?? "";
+        const exactAddress = roadAddress || address;
+        const placeName = exactAddress || fallbackName;
+
+        onChangeRef.current({
+          placeName,
+          addressName: address,
+          roadAddressName: roadAddress,
+          placeUrl: "",
+          lat,
+          lng,
+        });
+        setQuery(placeName);
+        setResults([]);
+
+        if (status !== kakao.maps.services.Status.OK) {
+          console.warn("선택한 위치의 상세 주소를 찾지 못했습니다.");
+        }
+      });
+    },
+    [moveMarker],
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -86,10 +131,20 @@ export function MapPicker({ value, onChange }: MapPickerProps) {
         kakaoRef.current = kakao;
         mapRef.current = map;
         placesRef.current = new kakao.maps.services.Places(map);
+        geocoderRef.current = new kakao.maps.services.Geocoder();
 
         if (initialValue?.lat !== null && initialValue?.lng !== null) {
           markerRef.current = new kakao.maps.Marker({ position: center, map });
         }
+
+        const handleMapClick = (mouseEvent: KakaoMapMouseEvent) => {
+          selectCoordinate(
+            mouseEvent.latLng.getLat(),
+            mouseEvent.latLng.getLng(),
+          );
+        };
+        mapClickHandlerRef.current = handleMapClick;
+        kakao.maps.event.addListener(map, "click", handleMapClick);
 
         setMapReady(true);
       } catch (error) {
@@ -104,8 +159,15 @@ export function MapPicker({ value, onChange }: MapPickerProps) {
     return () => {
       cancelled = true;
       markerRef.current?.setMap(null);
+
+      const kakao = kakaoRef.current;
+      const map = mapRef.current;
+      const handler = mapClickHandlerRef.current;
+      if (kakao && map && handler) {
+        kakao.maps.event.removeListener(map, "click", handler);
+      }
     };
-  }, []);
+  }, [selectCoordinate]);
 
   useEffect(() => {
     if (!value || !mapReady || value.lat === null || value.lng === null) return;
@@ -134,14 +196,12 @@ export function MapPicker({ value, onChange }: MapPickerProps) {
       (data, status) => {
         setSearching(false);
 
-        if (status === kakao.maps.services.Status.OK) {
+        if (status === kakao.maps.services.Status.OK && data[0]) {
+          const first = placeResultToSelection(data[0]);
           setResults(data);
-          if (data[0]) {
-            const first = placeResultToSelection(data[0]);
-            if (first.lat !== null && first.lng !== null) {
-              moveMarker(first.lat, first.lng);
-            }
-          }
+          onChangeRef.current(first);
+          setQuery(first.placeName);
+          moveMarker(first.lat as number, first.lng as number);
           return;
         }
 
@@ -160,14 +220,57 @@ export function MapPicker({ value, onChange }: MapPickerProps) {
 
   function selectPlace(place: KakaoPlaceResult) {
     const selection = placeResultToSelection(place);
-    onChange(selection);
-    if (selection.lat !== null && selection.lng !== null) {
-      moveMarker(selection.lat, selection.lng);
-    }
+    onChangeRef.current(selection);
+    moveMarker(selection.lat as number, selection.lng as number);
     setQuery(selection.placeName);
     setResults([]);
   }
 
+  function findExactAddress() {
+    const typedAddress = query.trim();
+    const kakao = kakaoRef.current;
+    const geocoder = geocoderRef.current;
+
+    if (!typedAddress) {
+      alert("찾을 주소를 입력해주세요.");
+      return;
+    }
+
+    if (!kakao || !geocoder) {
+      alert(mapError || "지도가 아직 준비되지 않았습니다.");
+      return;
+    }
+
+    setSearching(true);
+    geocoder.addressSearch(typedAddress, (data, status) => {
+      setSearching(false);
+      const result = data[0];
+
+      if (status === kakao.maps.services.Status.OK && result) {
+        const roadAddress = result.road_address?.address_name ?? "";
+        const address = result.address?.address_name ?? result.address_name;
+        const lat = Number(result.y);
+        const lng = Number(result.x);
+
+        const selection: PlaceSelection = {
+          placeName: typedAddress,
+          addressName: address,
+          roadAddressName: roadAddress,
+          placeUrl: "",
+          lat,
+          lng,
+        };
+
+        onChangeRef.current(selection);
+        moveMarker(lat, lng);
+        setQuery(typedAddress);
+        setResults([]);
+        return;
+      }
+
+      alert("정확한 주소를 찾지 못했습니다. 장소 검색을 사용하거나 지도를 눌러주세요.");
+    });
+  }
 
   function useTypedPlaceName() {
     const placeName = query.trim();
@@ -177,7 +280,7 @@ export function MapPicker({ value, onChange }: MapPickerProps) {
       return;
     }
 
-    onChange({
+    onChangeRef.current({
       placeName,
       addressName: "",
       roadAddressName: "",
@@ -194,8 +297,7 @@ export function MapPicker({ value, onChange }: MapPickerProps) {
       return;
     }
 
-    const kakao = kakaoRef.current;
-    if (!kakao) {
+    if (!kakaoRef.current || !geocoderRef.current) {
       alert(mapError || "지도가 아직 준비되지 않았습니다.");
       return;
     }
@@ -203,34 +305,8 @@ export function MapPicker({ value, onChange }: MapPickerProps) {
     setLocating(true);
     navigator.geolocation.getCurrentPosition(
       ({ coords }) => {
-        const lat = coords.latitude;
-        const lng = coords.longitude;
-        const geocoder = new kakao.maps.services.Geocoder();
-
-        geocoder.coord2Address(lng, lat, (data, status) => {
-          setLocating(false);
-
-          const result = data[0];
-          const roadAddress = result?.road_address?.address_name ?? "";
-          const address = result?.address?.address_name ?? "";
-          const label = roadAddress || address || "현재 위치";
-
-          onChange({
-            placeName: label,
-            addressName: address,
-            roadAddressName: roadAddress,
-            placeUrl: "",
-            lat,
-            lng,
-          });
-          moveMarker(lat, lng);
-          setQuery(label);
-          setResults([]);
-
-          if (status !== kakao.maps.services.Status.OK) {
-            console.warn("현재 위치의 주소를 찾지 못했습니다.");
-          }
-        });
+        setLocating(false);
+        selectCoordinate(coords.latitude, coords.longitude, "현재 위치");
       },
       (error) => {
         setLocating(false);
@@ -255,14 +331,14 @@ export function MapPicker({ value, onChange }: MapPickerProps) {
         <div>
           <h2 className="font-semibold text-stone-900">장소</h2>
           <p className="mt-1 text-xs leading-5 text-stone-500">
-            카카오맵에서 장소를 검색해 추억과 위치를 연결하세요.
+            장소를 검색하거나 지도를 눌러 정확한 주소를 선택하세요.
           </p>
         </div>
         {value ? (
           <button
             type="button"
             onClick={() => {
-              onChange(null);
+              onChangeRef.current(null);
               markerRef.current?.setMap(null);
               setQuery("");
               setResults([]);
@@ -279,7 +355,7 @@ export function MapPicker({ value, onChange }: MapPickerProps) {
           <input
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="예: 광주 양림동 카페"
+            placeholder="예: 광주 양림동 카페 또는 도로명주소"
             className="min-w-0 flex-1 rounded-xl border border-stone-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-orange-300 focus:ring-4 focus:ring-orange-100"
           />
           <button
@@ -287,23 +363,33 @@ export function MapPicker({ value, onChange }: MapPickerProps) {
             disabled={!mapReady || searching}
             className="rounded-xl bg-stone-900 px-4 py-3 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-40"
           >
-            {searching ? "검색 중" : "검색"}
+            {searching ? "검색 중" : "장소 검색"}
           </button>
         </div>
 
-        <button
-          type="button"
-          onClick={useTypedPlaceName}
-          disabled={!query.trim()}
-          className="w-full rounded-xl border border-orange-200 bg-orange-50 px-4 py-3 text-sm font-semibold text-orange-700 transition active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-40"
-        >
-          입력한 장소명 그대로 사용
-        </button>
+        <div className="grid grid-cols-2 gap-2">
+          <button
+            type="button"
+            onClick={findExactAddress}
+            disabled={!mapReady || searching || !query.trim()}
+            className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-3 text-sm font-semibold text-emerald-700 transition active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            주소로 정확히 찾기
+          </button>
+          <button
+            type="button"
+            onClick={useTypedPlaceName}
+            disabled={!query.trim()}
+            className="rounded-xl border border-orange-200 bg-orange-50 px-3 py-3 text-sm font-semibold text-orange-700 transition active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            입력값만 사용
+          </button>
+        </div>
       </form>
 
       {value ? (
         <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3">
-          <p className="text-xs font-semibold text-emerald-700">선택된 장소</p>
+          <p className="text-xs font-semibold text-emerald-700">저장될 장소</p>
           <p className="mt-1 font-semibold text-stone-900">{value.placeName}</p>
           {value.roadAddressName || value.addressName ? (
             <p className="mt-1 text-xs leading-5 text-stone-500">
@@ -311,7 +397,7 @@ export function MapPicker({ value, onChange }: MapPickerProps) {
             </p>
           ) : (
             <p className="mt-1 text-xs leading-5 text-stone-500">
-              직접 입력한 장소명으로 저장됩니다.
+              주소 없이 입력한 장소명만 저장됩니다.
             </p>
           )}
         </div>
@@ -324,11 +410,14 @@ export function MapPicker({ value, onChange }: MapPickerProps) {
         className="flex w-full items-center justify-center gap-2 rounded-xl border border-stone-200 bg-white px-4 py-3 text-sm font-semibold text-stone-700 transition active:scale-[0.99] disabled:opacity-40"
       >
         <span aria-hidden>◎</span>
-        {locating ? "현재 위치 확인 중..." : "현재 위치 사용"}
+        {locating ? "현재 위치 확인 중..." : "현재 위치와 정확한 주소 사용"}
       </button>
 
       {results.length > 0 ? (
         <div className="max-h-72 overflow-y-auto rounded-2xl border border-stone-200 bg-white shadow-lg">
+          <div className="border-b border-stone-100 bg-stone-50 px-4 py-2 text-[11px] font-semibold text-stone-500">
+            첫 번째 결과가 자동 선택됐습니다. 다른 장소는 아래에서 눌러 변경하세요.
+          </div>
           {results.map((place) => (
             <button
               key={place.id}
@@ -336,7 +425,9 @@ export function MapPicker({ value, onChange }: MapPickerProps) {
               onClick={() => selectPlace(place)}
               className="block w-full border-b border-stone-100 px-4 py-3 text-left last:border-0 hover:bg-orange-50"
             >
-              <strong className="block text-sm text-stone-900">{place.place_name}</strong>
+              <strong className="block text-sm text-stone-900">
+                {place.place_name}
+              </strong>
               <span className="mt-1 block text-xs leading-5 text-stone-500">
                 {place.road_address_name || place.address_name}
               </span>
@@ -351,7 +442,11 @@ export function MapPicker({ value, onChange }: MapPickerProps) {
       ) : null}
 
       <div className="relative overflow-hidden rounded-2xl border border-stone-200 bg-stone-100">
-        <div ref={mapContainerRef} className="h-72 w-full" aria-label="장소 선택 지도" />
+        <div
+          ref={mapContainerRef}
+          className="h-72 w-full"
+          aria-label="장소 선택 지도"
+        />
 
         {!mapReady && !mapError ? (
           <div className="absolute inset-0 flex items-center justify-center bg-stone-100 text-sm text-stone-500">
@@ -359,9 +454,17 @@ export function MapPicker({ value, onChange }: MapPickerProps) {
           </div>
         ) : null}
 
+        {mapReady ? (
+          <div className="pointer-events-none absolute bottom-3 left-1/2 -translate-x-1/2 rounded-full bg-black/70 px-3 py-1.5 text-[11px] font-semibold text-white backdrop-blur">
+            지도를 누르면 그 위치의 주소가 선택됩니다
+          </div>
+        ) : null}
+
         {mapError ? (
           <div className="absolute inset-0 flex flex-col items-center justify-center bg-stone-100 px-6 text-center">
-            <p className="text-sm font-semibold text-stone-700">카카오맵 설정이 필요합니다.</p>
+            <p className="text-sm font-semibold text-stone-700">
+              카카오맵 설정이 필요합니다.
+            </p>
             <p className="mt-2 text-xs leading-5 text-stone-500">{mapError}</p>
             <p className="mt-2 text-[11px] leading-5 text-stone-400">
               장소를 선택하지 않아도 Pixel 저장은 가능합니다.
@@ -369,22 +472,6 @@ export function MapPicker({ value, onChange }: MapPickerProps) {
           </div>
         ) : null}
       </div>
-
-      {value ? (
-        <div className="rounded-2xl border border-orange-200 bg-orange-50 p-4">
-          <div className="flex items-start gap-3">
-            <span className="mt-0.5 text-lg" aria-hidden>
-              📍
-            </span>
-            <div className="min-w-0">
-              <p className="font-semibold text-stone-900">{value.placeName}</p>
-              <p className="mt-1 text-xs leading-5 text-stone-500">
-                {value.roadAddressName || value.addressName || "주소 정보 없음"}
-              </p>
-            </div>
-          </div>
-        </div>
-      ) : null}
     </section>
   );
 }

@@ -1,0 +1,6 @@
+Pixel Key image upload fix
+
+- Fixed browser error: Failed to execute 'set' on 'Headers': String contains non ISO-8859-1 code point.
+- The upload now converts File to ArrayBuffer before sending it to Supabase Storage.
+- Only an ASCII-safe MIME type and UUID-based storage path are used.
+- Production build verified with Next.js 16.2.9.

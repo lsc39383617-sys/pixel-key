@@ -1,11 +1,9 @@
-Pixel Key Kakao Map Beta
-Verified: 2026-07-16
+Pixel Key address and image upload fix
 
-Passed:
-- npm run lint
-- npm run build (Next.js 16.2.9)
-- production server smoke test for / and /add
+Verification performed:
+- npm ci completed
+- Next.js 16.2.9 production build completed
+- TypeScript check completed
+- Routes: /, /add, /pixel/[uid]
 
-External connection note:
-- Kakao Maps requires a valid NEXT_PUBLIC_KAKAO_MAP_KEY and registered JavaScript SDK domains.
-- Supabase requires the existing project URL/anon key and execution of supabase-migration.sql.
+Image upload now sends ArrayBuffer data with an ASCII-safe Content-Type to prevent non ISO-8859-1 header errors.

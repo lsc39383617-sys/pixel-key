@@ -15,6 +15,10 @@ export interface KakaoMarkerInstance {
   setPosition(position: KakaoLatLng): void;
 }
 
+export interface KakaoMapMouseEvent {
+  latLng: KakaoLatLng;
+}
+
 export interface KakaoPlaceResult {
   id: string;
   place_name: string;
@@ -37,6 +41,13 @@ export interface KakaoAddressResult {
   road_address: {
     address_name: string;
   } | null;
+}
+
+export interface KakaoAddressSearchResult extends KakaoAddressResult {
+  address_name: string;
+  address_type: string;
+  x: string;
+  y: string;
 }
 
 export interface KakaoPagination {
@@ -75,6 +86,10 @@ export interface KakaoGeocoderService {
     lat: number,
     callback: (result: KakaoAddressResult[], status: string) => void,
   ): void;
+  addressSearch(
+    address: string,
+    callback: (result: KakaoAddressSearchResult[], status: string) => void,
+  ): void;
 }
 
 export interface KakaoMapsNamespace {
@@ -88,6 +103,18 @@ export interface KakaoMapsNamespace {
     position: KakaoLatLng;
     map?: KakaoMapInstance;
   }) => KakaoMarkerInstance;
+  event: {
+    addListener(
+      target: KakaoMapInstance,
+      type: "click",
+      handler: (event: KakaoMapMouseEvent) => void,
+    ): void;
+    removeListener(
+      target: KakaoMapInstance,
+      type: "click",
+      handler: (event: KakaoMapMouseEvent) => void,
+    ): void;
+  };
   services: {
     Places: new (map?: KakaoMapInstance) => KakaoPlacesService;
     Geocoder: new () => KakaoGeocoderService;
