@@ -180,7 +180,7 @@ export function PixelFlower({
             ))}
 
             <div
-              className="absolute inset-[10%] z-20 grid gap-[1px] drop-shadow-[0_8px_12px_rgba(70,48,51,0.16)]"
+              className="absolute inset-[4%] z-20 grid gap-[0.5px] drop-shadow-[0_8px_12px_rgba(70,48,51,0.16)]"
               style={{
                 gridTemplateColumns: `repeat(${FLOWER_GRID_SIZE}, minmax(0, 1fr))`,
                 gridTemplateRows: `repeat(${FLOWER_GRID_SIZE}, minmax(0, 1fr))`,
