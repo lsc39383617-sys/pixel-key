@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 :root {
-  --background: #faf6f1;
+  --background: #fbf6f0;
   --foreground: #1c1917;
 }
 
@@ -11,85 +11,104 @@
   --font-sans: var(--font-geist-sans);
 }
 
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
 body {
+  margin: 0;
   background: var(--background);
   color: var(--foreground);
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+button {
+  -webkit-tap-highlight-color: transparent;
 }
 
 .safe-top {
-  padding-top: max(2.75rem, env(safe-area-inset-top));
+  padding-top: max(1.25rem, env(safe-area-inset-top));
 }
 
 .safe-bottom {
-  padding-bottom: max(0.625rem, env(safe-area-inset-bottom));
+  padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
 }
 
 .safe-modal-bottom {
   margin-bottom: max(1rem, env(safe-area-inset-bottom));
 }
 
-.bg-warm-gradient {
+.bg-social-gradient {
   background:
-    radial-gradient(ellipse 92% 50% at 50% -6%, rgba(255, 181, 166, 0.48), transparent),
-    radial-gradient(ellipse 75% 42% at 100% 18%, rgba(213, 196, 255, 0.34), transparent),
-    radial-gradient(ellipse 65% 42% at -5% 55%, rgba(255, 214, 171, 0.38), transparent),
-    radial-gradient(ellipse 52% 33% at 78% 88%, rgba(184, 229, 211, 0.23), transparent),
-    linear-gradient(180deg, #fffaf6 0%, #f9f0e8 45%, #f2e8df 100%);
+    radial-gradient(circle at 12% 2%, rgba(255, 173, 183, 0.36), transparent 27%),
+    radial-gradient(circle at 94% 15%, rgba(198, 176, 255, 0.27), transparent 28%),
+    radial-gradient(circle at 4% 65%, rgba(255, 205, 146, 0.28), transparent 26%),
+    radial-gradient(circle at 90% 86%, rgba(148, 219, 190, 0.2), transparent 27%),
+    linear-gradient(180deg, #fff9f5 0%, #f9efe7 52%, #f4ebe4 100%);
 }
 
-.bg-warm-gradient::before {
+.bg-social-gradient::before {
   content: "";
   position: fixed;
   inset: 0;
+  z-index: 0;
   pointer-events: none;
-  opacity: 0.28;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  background-size: 128px 128px;
-  mix-blend-mode: overlay;
+  opacity: 0.15;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.7'/%3E%3C/svg%3E");
+  background-size: 140px 140px;
+  mix-blend-mode: multiply;
+}
+
+.bg-social-gradient > * {
+  position: relative;
+  z-index: 1;
 }
 
 @keyframes fade-up {
-  from { opacity: 0; transform: translateY(12px); }
+  from { opacity: 0; transform: translateY(14px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
-@keyframes float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-6px); }
-}
-
 @keyframes flower-float {
-  0%, 100% { transform: translateY(0) rotate(-0.35deg); }
-  50% { transform: translateY(-7px) rotate(0.35deg); }
+  0%, 100% { transform: translateY(0) rotate(-0.25deg); }
+  50% { transform: translateY(-7px) rotate(0.25deg); }
 }
 
 @keyframes bloom-pulse {
-  0%, 100% { transform: scale(0.985); filter: saturate(0.96); }
-  50% { transform: scale(1.015); filter: saturate(1.08); }
+  0%, 100% { transform: scale(0.99); filter: saturate(1); }
+  50% { transform: scale(1.025); filter: saturate(1.14); }
 }
 
 @keyframes flower-sparkle {
-  0%, 100% { opacity: 0.25; transform: scale(0.65) rotate(0deg); }
+  0%, 100% { opacity: 0.2; transform: scale(0.55) rotate(0deg); }
   45% { opacity: 1; transform: scale(1.1) rotate(90deg); }
-  70% { opacity: 0.5; transform: scale(0.8) rotate(160deg); }
+  70% { opacity: 0.45; transform: scale(0.78) rotate(160deg); }
 }
 
 @keyframes leaf-sway {
   0%, 100% { transform: rotate(-28deg); }
-  50% { transform: rotate(-23deg); }
+  50% { transform: rotate(-22deg); }
 }
 
 @keyframes leaf-sway-reverse {
   0%, 100% { transform: rotate(31deg); }
-  50% { transform: rotate(26deg); }
+  50% { transform: rotate(25deg); }
 }
 
 .animate-fade-up {
   animation: fade-up 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-
-.animate-float {
-  animation: float 5s ease-in-out infinite;
 }
 
 .animate-flower-float {
@@ -172,7 +191,19 @@ body {
   animation: modal-content 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
+@media (min-width: 640px) {
+  .safe-top {
+    padding-top: max(2rem, env(safe-area-inset-top));
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+  }
+
   .animate-flower-float,
   .animate-bloom-pulse,
   .animate-flower-sparkle,

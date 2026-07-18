@@ -11,7 +11,6 @@ import {
   FLOWER_PIXELS,
   ORDERED_FLOWER_MEMORY_SLOTS,
   PETAL_GLOWS,
-  PETAL_PALETTES,
   type FlowerPixel,
 } from "./flowerData";
 
@@ -25,19 +24,19 @@ type PixelFlowerProps = {
 const sizeStyles = {
   sm: {
     shell: "h-[300px] w-[250px]",
-    bloom: "h-[210px] w-[210px]",
+    bloom: "h-[225px] w-[225px]",
     ring: "h-7 w-12",
     label: "text-[11px]",
   },
   md: {
-    shell: "h-[365px] w-[310px]",
-    bloom: "h-[270px] w-[270px]",
+    shell: "h-[350px] w-[310px]",
+    bloom: "h-[290px] w-[290px]",
     ring: "h-8 w-14",
     label: "text-xs",
   },
   lg: {
-    shell: "h-[440px] w-[360px] sm:w-[390px]",
-    bloom: "h-[315px] w-[315px] sm:h-[330px] sm:w-[330px]",
+    shell: "h-[395px] w-full max-w-[390px]",
+    bloom: "h-[330px] w-[330px] sm:h-[345px] sm:w-[345px]",
     ring: "h-9 w-16",
     label: "text-sm",
   },
@@ -114,42 +113,42 @@ export function PixelFlower({
       aria-label={`${filledCount}개의 추억이 피어난 픽셀 꽃`}
     >
       <div
-        className="pointer-events-none absolute -inset-8 -z-20 rounded-full bg-[radial-gradient(circle,rgba(255,184,176,0.28),rgba(202,183,255,0.16)_42%,transparent_72%)] blur-2xl"
+        className="pointer-events-none absolute -inset-8 -z-20 rounded-full bg-[radial-gradient(circle,rgba(255,114,154,0.34),rgba(180,139,255,0.18)_43%,transparent_72%)] blur-2xl"
         aria-hidden
       />
 
-      <div className="absolute left-1/2 top-0 z-40 -translate-x-1/2 -translate-y-[46%]">
+      <div className="absolute left-1/2 top-1 z-40 -translate-x-1/2 -translate-y-[46%] opacity-85">
         <div
-          className={`${styles.ring} rounded-full border-[5px] border-[#D9D5CF] bg-gradient-to-b from-white via-[#F4F1EC] to-[#CFC9C1] shadow-[0_5px_16px_rgba(76,62,50,0.2),inset_0_2px_2px_white]`}
+          className={`${styles.ring} rounded-full border-[4px] border-[#d8b5b8] bg-gradient-to-b from-[#fff5ef] via-[#e8c7c9] to-[#9f757c] shadow-[0_5px_18px_rgba(0,0,0,0.28),inset_0_2px_2px_white]`}
           aria-hidden
         />
         <div
-          className="absolute left-1/2 top-full h-8 w-[4px] -translate-x-1/2 rounded-b-full bg-gradient-to-b from-[#CFC9C1] to-[#ECE8E2]"
+          className="absolute left-1/2 top-full h-8 w-[4px] -translate-x-1/2 rounded-b-full bg-gradient-to-b from-[#b9868f] to-[#ead0cb]"
           aria-hidden
         />
       </div>
 
       <div
-        className={`${styles.shell} animate-flower-float relative overflow-hidden rounded-[32%_32%_29%_29%] border border-white/95 bg-white/55 shadow-[0_34px_80px_-35px_rgba(73,46,40,0.48),0_10px_30px_-18px_rgba(91,70,61,0.3),inset_0_0_0_1px_rgba(255,255,255,0.85)] backdrop-blur-xl`}
+        className={`${styles.shell} animate-flower-float relative overflow-hidden rounded-[30%_30%_26%_26%] border border-white/12 bg-[radial-gradient(circle_at_50%_30%,rgba(255,255,255,0.13),transparent_42%),linear-gradient(160deg,rgba(255,255,255,0.08),rgba(255,255,255,0.015))] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.05),0_24px_55px_-32px_rgba(0,0,0,0.8)] backdrop-blur-sm`}
       >
         <div
-          className="pointer-events-none absolute inset-[2.5%] rounded-[30%_30%_27%_27%] border border-white/80 bg-[linear-gradient(145deg,rgba(255,255,255,0.72),rgba(255,247,241,0.2)_52%,rgba(229,219,255,0.18))]"
+          className="pointer-events-none absolute inset-[2.5%] rounded-[28%_28%_24%_24%] border border-white/10 bg-[linear-gradient(145deg,rgba(255,255,255,0.08),rgba(255,182,207,0.025)_52%,rgba(155,224,202,0.045))]"
           aria-hidden
         />
 
         <div className="pointer-events-none absolute inset-x-0 bottom-[3%] top-[9%]" aria-hidden>
-          <div className="absolute left-1/2 top-[51%] h-[36%] w-[5px] -translate-x-1/2 rounded-full bg-gradient-to-b from-[#82B96A] via-[#5D9A56] to-[#447C43] shadow-[0_2px_8px_rgba(63,116,65,0.28)]" />
+          <div className="absolute left-1/2 top-[49%] h-[38%] w-[5px] -translate-x-1/2 rounded-full bg-gradient-to-b from-[#a8dd83] via-[#6fbd68] to-[#347b4d] shadow-[0_2px_8px_rgba(63,116,65,0.28)]" />
           <div className="animate-leaf-sway absolute bottom-[18%] left-[31%] h-[15%] w-[24%] origin-bottom-right -rotate-[28deg] rounded-[90%_20%_85%_20%] bg-gradient-to-br from-[#A9D889] via-[#70B46D] to-[#4B8B51] shadow-[inset_3px_3px_8px_rgba(255,255,255,0.28),0_5px_12px_rgba(59,105,58,0.18)]" />
           <div className="animate-leaf-sway-reverse absolute bottom-[11%] right-[28%] h-[13%] w-[22%] origin-bottom-left rotate-[31deg] rounded-[20%_90%_20%_85%] bg-gradient-to-bl from-[#B8DF91] via-[#79B96A] to-[#4B8A4E] shadow-[inset_-3px_3px_8px_rgba(255,255,255,0.25),0_5px_12px_rgba(59,105,58,0.16)]" />
         </div>
 
-        <div className="absolute left-1/2 top-[6%] z-10 -translate-x-1/2">
+        <div className="absolute left-1/2 top-[1%] z-10 -translate-x-1/2">
           <div className={`${styles.bloom} relative`}>
-            <div className="pointer-events-none absolute inset-[7%] animate-bloom-pulse" aria-hidden>
+            <div className="pointer-events-none absolute inset-[4%] animate-bloom-pulse" aria-hidden>
               {DECORATIVE_PETALS.map((petal, index) => (
                 <span
                   key={petal.angle}
-                  className="absolute left-1/2 top-1/2 h-[48%] w-[30%] origin-[50%_93%] rounded-[58%_58%_44%_44%] border border-white/30 blur-[1px]"
+                  className="absolute left-1/2 top-1/2 h-[48%] w-[30%] origin-[50%_93%] rounded-[58%_58%_44%_44%] border border-white/20"
                   style={{
                     background: `linear-gradient(180deg, rgba(255,255,255,0.42), ${petal.color})`,
                     transform: `translate(-50%, -93%) rotate(${petal.angle}deg) scale(${index % 2 === 0 ? 1.04 : 0.96})`,
@@ -158,7 +157,7 @@ export function PixelFlower({
               ))}
             </div>
 
-            <div className="pointer-events-none absolute inset-[17%] rotate-[22.5deg] opacity-75" aria-hidden>
+            <div className="pointer-events-none absolute inset-[14%] rotate-[22.5deg] opacity-90" aria-hidden>
               {DECORATIVE_PETALS.map((petal) => (
                 <span
                   key={`inner-${petal.angle}`}
@@ -181,7 +180,7 @@ export function PixelFlower({
             ))}
 
             <div
-              className="absolute inset-[13%] z-20 grid gap-[1px] drop-shadow-[0_8px_12px_rgba(70,48,51,0.16)]"
+              className="absolute inset-[10%] z-20 grid gap-[1px] drop-shadow-[0_8px_12px_rgba(70,48,51,0.16)]"
               style={{
                 gridTemplateColumns: `repeat(${FLOWER_GRID_SIZE}, minmax(0, 1fr))`,
                 gridTemplateRows: `repeat(${FLOWER_GRID_SIZE}, minmax(0, 1fr))`,
@@ -253,26 +252,26 @@ export function PixelFlower({
           </div>
         </div>
 
-        <div className="absolute bottom-[4.5%] left-1/2 z-20 w-[82%] -translate-x-1/2 rounded-2xl border border-white/80 bg-white/68 px-4 py-3 shadow-[0_8px_24px_rgba(78,59,53,0.1)] backdrop-blur-xl">
+        <div className="absolute bottom-[3.5%] left-1/2 z-20 w-[86%] -translate-x-1/2 rounded-2xl border border-white/12 bg-black/28 px-4 py-3 shadow-[0_10px_28px_rgba(0,0,0,0.22)] backdrop-blur-xl">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <p className={`${styles.label} font-bold text-stone-700`}>
+              <p className={`${styles.label} font-bold text-white`}>
                 {filledCount}개의 추억이 피어났어요
               </p>
-              <p className="mt-0.5 text-[10px] font-medium text-stone-400">
+              <p className="mt-0.5 text-[10px] font-medium text-white/45">
                 꽃잎을 눌러 추억을 열어보세요
               </p>
             </div>
-            <div className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-stone-900 text-[11px] font-black text-white shadow-lg">
+            <div className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white text-[11px] font-black text-stone-900 shadow-lg">
               {progress}%
               <svg className="absolute inset-0 h-full w-full -rotate-90" viewBox="0 0 44 44" aria-hidden>
-                <circle cx="22" cy="22" r="19" fill="none" stroke="rgba(255,255,255,0.16)" strokeWidth="2" />
+                <circle cx="22" cy="22" r="19" fill="none" stroke="rgba(28,25,23,0.12)" strokeWidth="2" />
                 <circle
                   cx="22"
                   cy="22"
                   r="19"
                   fill="none"
-                  stroke="rgba(255,255,255,0.92)"
+                  stroke="rgba(28,25,23,0.9)"
                   strokeWidth="2"
                   strokeLinecap="round"
                   strokeDasharray={`${2 * Math.PI * 19}`}
@@ -283,7 +282,7 @@ export function PixelFlower({
           </div>
         </div>
 
-        <div className="pointer-events-none absolute left-[9%] top-[6%] h-[35%] w-[12%] -rotate-12 rounded-full bg-white/24 blur-md" aria-hidden />
+        <div className="pointer-events-none absolute left-[10%] top-[6%] h-[32%] w-[10%] -rotate-12 rounded-full bg-white/10 blur-md" aria-hidden />
       </div>
     </div>
   );
