@@ -1,14 +1,16 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
+import { deletePixel } from "@/lib/pixel";
 import { getCategoryMeta } from "@/lib/pixel-category";
 import type { Pixel } from "@/types/pixel";
 
 type MemoryFeedCardProps = {
   pixel: Pixel;
   index: number;
+  onDeleted?: (uid: string) => void;
 };
 
 const FALLBACK_BACKGROUNDS = [
@@ -58,18 +60,42 @@ function IconButton({
   );
 }
 
-export function MemoryFeedCard({ pixel, index }: MemoryFeedCardProps) {
+export function MemoryFeedCard({
+  pixel,
+  index,
+  onDeleted,
+}: MemoryFeedCardProps) {
   const router = useRouter();
+  const menuRef = useRef<HTMLDivElement>(null);
   const meta = getCategoryMeta(pixel.category);
-  const [liked, setLiked] = useState(false);
-  const [saved, setSaved] = useState(false);
+  const [liked, setLiked] = useState(() =>
+    typeof window !== "undefined" &&
+    localStorage.getItem(`pixel-like:${pixel.uid}`) === "1",
+  );
+  const [saved, setSaved] = useState(() =>
+    typeof window !== "undefined" &&
+    localStorage.getItem(`pixel-save:${pixel.uid}`) === "1",
+  );
   const [shareLabel, setShareLabel] = useState("공유");
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const detailUrl = useMemo(() => {
     if (typeof window === "undefined") return `/pixel/${pixel.uid}`;
     return `${window.location.origin}/pixel/${pixel.uid}`;
   }, [pixel.uid]);
 
+
+  useEffect(() => {
+    function closeMenu(event: MouseEvent) {
+      if (!menuRef.current?.contains(event.target as Node)) {
+        setMenuOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", closeMenu);
+    return () => document.removeEventListener("mousedown", closeMenu);
+  }, []);
 
   function toggleLike() {
     setLiked((current) => {
@@ -107,12 +133,33 @@ export function MemoryFeedCard({ pixel, index }: MemoryFeedCardProps) {
     }
   }
 
-  const location = pixel.place_name || pixel.road_address_name || pixel.address_name;
+  async function handleDelete() {
+    if (deleting) return;
+
+    const confirmed = window.confirm(
+      `“${pixel.name}” 추억을 삭제할까요? 삭제 후에는 되돌릴 수 없습니다.`,
+    );
+    if (!confirmed) return;
+
+    try {
+      setDeleting(true);
+      await deletePixel(pixel.uid, pixel.image);
+      localStorage.removeItem(`pixel-like:${pixel.uid}`);
+      localStorage.removeItem(`pixel-save:${pixel.uid}`);
+      onDeleted?.(pixel.uid);
+    } catch (error) {
+      alert(error instanceof Error ? error.message : "삭제에 실패했습니다.");
+      setDeleting(false);
+    }
+  }
+
+  const location =
+    pixel.place_name || pixel.road_address_name || pixel.address_name;
   const fallback = FALLBACK_BACKGROUNDS[index % FALLBACK_BACKGROUNDS.length];
 
   return (
-    <article className="overflow-hidden rounded-[1.75rem] border border-white/75 bg-white/90 shadow-[0_18px_50px_rgba(77,55,51,0.12)] backdrop-blur-xl">
-      <header className="flex items-center justify-between px-4 py-3.5">
+    <article className="overflow-visible rounded-[1.75rem] border border-white/75 bg-white/90 shadow-[0_18px_50px_rgba(77,55,51,0.12)] backdrop-blur-xl">
+      <header className="relative flex items-center justify-between px-4 py-3.5">
         <button
           type="button"
           onClick={() => router.push(`/pixel/${pixel.uid}`)}
@@ -133,9 +180,47 @@ export function MemoryFeedCard({ pixel, index }: MemoryFeedCardProps) {
           </span>
         </button>
 
-        <span className="rounded-full bg-stone-100 px-3 py-1.5 text-[10px] font-black text-stone-500">
-          {meta.emoji} {meta.label}
-        </span>
+        <div className="flex items-center gap-1.5">
+          <span className="rounded-full bg-stone-100 px-3 py-1.5 text-[10px] font-black text-stone-500">
+            {meta.emoji} {meta.label}
+          </span>
+
+          <div ref={menuRef} className="relative">
+            <button
+              type="button"
+              aria-label="게시물 관리"
+              onClick={() => setMenuOpen((current) => !current)}
+              className="flex h-9 w-9 items-center justify-center rounded-full text-stone-500 transition hover:bg-stone-100 active:scale-90"
+            >
+              <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor">
+                <circle cx="5" cy="12" r="1.7" />
+                <circle cx="12" cy="12" r="1.7" />
+                <circle cx="19" cy="12" r="1.7" />
+              </svg>
+            </button>
+
+            {menuOpen ? (
+              <div className="absolute right-0 top-11 z-40 w-40 overflow-hidden rounded-2xl border border-stone-100 bg-white p-1.5 shadow-[0_18px_50px_rgba(35,25,22,0.2)]">
+                <button
+                  type="button"
+                  onClick={() => router.push(`/pixel/${pixel.uid}/edit`)}
+                  className="flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-left text-sm font-bold text-stone-700 transition hover:bg-stone-50"
+                >
+                  <span aria-hidden>✏️</span> 수정하기
+                </button>
+                <button
+                  type="button"
+                  onClick={handleDelete}
+                  disabled={deleting}
+                  className="flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-left text-sm font-bold text-rose-600 transition hover:bg-rose-50 disabled:opacity-50"
+                >
+                  <span aria-hidden>🗑️</span>
+                  {deleting ? "삭제 중..." : "삭제하기"}
+                </button>
+              </div>
+            ) : null}
+          </div>
+        </div>
       </header>
 
       <button
@@ -182,8 +267,16 @@ export function MemoryFeedCard({ pixel, index }: MemoryFeedCardProps) {
       <div className="px-4 pb-4 pt-2.5">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1">
-            <IconButton label={liked ? "좋아요 취소" : "좋아요"} active={liked} onClick={toggleLike}>
-              <svg viewBox="0 0 24 24" className="h-6 w-6" fill={liked ? "currentColor" : "none"}>
+            <IconButton
+              label={liked ? "좋아요 취소" : "좋아요"}
+              active={liked}
+              onClick={toggleLike}
+            >
+              <svg
+                viewBox="0 0 24 24"
+                className="h-6 w-6"
+                fill={liked ? "currentColor" : "none"}
+              >
                 <path
                   d="M20.8 4.9c-2-2-5.2-2-7.2 0L12 6.5l-1.6-1.6c-2-2-5.2-2-7.2 0s-2 5.2 0 7.2L12 20.9l8.8-8.8c2-2 2-5.2 0-7.2z"
                   stroke="currentColor"
@@ -192,21 +285,47 @@ export function MemoryFeedCard({ pixel, index }: MemoryFeedCardProps) {
                 />
               </svg>
             </IconButton>
-            <IconButton label="추억 열기" onClick={() => router.push(`/pixel/${pixel.uid}`)}>
+            <IconButton
+              label="추억 열기"
+              onClick={() => router.push(`/pixel/${pixel.uid}`)}
+            >
               <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none">
-                <path d="M5 5h14v11H9l-4 3V5z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
+                <path
+                  d="M5 5h14v11H9l-4 3V5z"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinejoin="round"
+                />
               </svg>
             </IconButton>
             <IconButton label={shareLabel} onClick={share}>
               <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none">
-                <path d="M21 3L10 14M21 3l-7 18-4-7-7-4 18-7z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
+                <path
+                  d="M21 3L10 14M21 3l-7 18-4-7-7-4 18-7z"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinejoin="round"
+                />
               </svg>
             </IconButton>
           </div>
 
-          <IconButton label={saved ? "저장 취소" : "저장"} active={saved} onClick={toggleSave}>
-            <svg viewBox="0 0 24 24" className="h-6 w-6" fill={saved ? "currentColor" : "none"}>
-              <path d="M6 3h12v18l-6-4-6 4V3z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
+          <IconButton
+            label={saved ? "저장 취소" : "저장"}
+            active={saved}
+            onClick={toggleSave}
+          >
+            <svg
+              viewBox="0 0 24 24"
+              className="h-6 w-6"
+              fill={saved ? "currentColor" : "none"}
+            >
+              <path
+                d="M6 3h12v18l-6-4-6 4V3z"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinejoin="round"
+              />
             </svg>
           </IconButton>
         </div>
@@ -218,7 +337,9 @@ export function MemoryFeedCard({ pixel, index }: MemoryFeedCardProps) {
           </p>
           <div className="mt-3 flex flex-wrap items-center gap-2 text-[11px] font-bold text-stone-400">
             <span>#{meta.label}</span>
-            {pixel.place_name ? <span>#{pixel.place_name.replaceAll(" ", "")}</span> : null}
+            {pixel.place_name ? (
+              <span>#{pixel.place_name.replaceAll(" ", "")}</span>
+            ) : null}
             <span className="ml-auto">{shareLabel}</span>
           </div>
         </div>

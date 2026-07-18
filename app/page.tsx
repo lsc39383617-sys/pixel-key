@@ -250,7 +250,14 @@ export default function HomePage() {
             </div>
           ) : (
             filteredPixels.map((pixel, index) => (
-              <MemoryFeedCard key={pixel.uid} pixel={pixel} index={index} />
+              <MemoryFeedCard
+                key={pixel.uid}
+                pixel={pixel}
+                index={index}
+                onDeleted={(uid) =>
+                  setPixels((current) => current.filter((item) => item.uid !== uid))
+                }
+              />
             ))
           )}
         </section>

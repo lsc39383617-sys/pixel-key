@@ -43,3 +43,12 @@ export interface CreatePixelInput {
   category: PixelCategory;
   place: PlaceSelection | null;
 }
+
+export interface UpdatePixelInput {
+  name: string;
+  description: string;
+  image: string | null;
+  visitedAt: string;
+  category: PixelCategory;
+  place: PlaceSelection | null;
+}

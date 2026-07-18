@@ -3,8 +3,9 @@
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+
 import { KakaoMap } from "@/components/map/KakaoMap";
-import { getPixel } from "@/lib/pixel";
+import { deletePixel, getPixel } from "@/lib/pixel";
 import { getCategoryMeta } from "@/lib/pixel-category";
 import type { Pixel } from "@/types/pixel";
 
@@ -22,6 +23,8 @@ export default function PixelPage() {
   const [pixel, setPixel] = useState<Pixel | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -49,6 +52,25 @@ export default function PixelPage() {
     };
   }, [params.uid]);
 
+  async function handleDelete() {
+    if (!pixel || deleting) return;
+
+    try {
+      setDeleting(true);
+      await deletePixel(pixel.uid, pixel.image);
+      router.replace("/");
+      router.refresh();
+    } catch (deleteError) {
+      alert(
+        deleteError instanceof Error
+          ? deleteError.message
+          : "삭제에 실패했습니다.",
+      );
+      setDeleting(false);
+      setShowDeleteConfirm(false);
+    }
+  }
+
   if (loading) {
     return (
       <main className="flex min-h-dvh items-center justify-center bg-warm-gradient text-stone-500">
@@ -60,9 +82,7 @@ export default function PixelPage() {
   if (!pixel || error) {
     return (
       <main className="flex min-h-dvh flex-col items-center justify-center gap-4 bg-warm-gradient px-6 text-center">
-        <span className="text-4xl" aria-hidden>
-          🌱
-        </span>
+        <span className="text-4xl" aria-hidden>🌱</span>
         <p className="font-semibold text-stone-800">
           {error || "Pixel을 찾을 수 없습니다."}
         </p>
@@ -84,13 +104,32 @@ export default function PixelPage() {
   return (
     <div className="min-h-dvh bg-warm-gradient">
       <main className="safe-top mx-auto min-h-dvh max-w-md px-5 pb-12">
-        <button
-          type="button"
-          onClick={() => router.back()}
-          className="mb-6 rounded-full bg-white/80 px-4 py-2 text-sm font-semibold text-stone-600 shadow-sm backdrop-blur"
-        >
-          ← 돌아가기
-        </button>
+        <header className="mb-6 flex items-center justify-between gap-3">
+          <button
+            type="button"
+            onClick={() => router.back()}
+            className="rounded-full bg-white/80 px-4 py-2 text-sm font-semibold text-stone-600 shadow-sm backdrop-blur"
+          >
+            ← 돌아가기
+          </button>
+
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => router.push(`/pixel/${pixel.uid}/edit`)}
+              className="rounded-full border border-white/80 bg-white/80 px-4 py-2 text-sm font-bold text-stone-700 shadow-sm backdrop-blur transition active:scale-95"
+            >
+              수정
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowDeleteConfirm(true)}
+              className="rounded-full border border-rose-100 bg-rose-50/90 px-4 py-2 text-sm font-bold text-rose-600 shadow-sm backdrop-blur transition active:scale-95"
+            >
+              삭제
+            </button>
+          </div>
+        </header>
 
         <article className="overflow-hidden rounded-[2rem] border border-white/80 bg-white/80 shadow-[0_28px_80px_-45px_rgba(60,40,30,0.6)] backdrop-blur-xl">
           {pixel.image ? (
@@ -127,13 +166,15 @@ export default function PixelPage() {
 
             {pixel.place_name ? (
               <div className="mt-4 flex items-start gap-3 rounded-2xl bg-orange-50 p-4">
-                <span className="text-lg" aria-hidden>
-                  📍
-                </span>
+                <span className="text-lg" aria-hidden>📍</span>
                 <div>
-                  <p className="font-semibold text-stone-800">{pixel.place_name}</p>
+                  <p className="font-semibold text-stone-800">
+                    {pixel.place_name}
+                  </p>
                   {address ? (
-                    <p className="mt-1 text-xs leading-5 text-stone-500">{address}</p>
+                    <p className="mt-1 text-xs leading-5 text-stone-500">
+                      {address}
+                    </p>
                   ) : null}
                 </div>
               </div>
@@ -158,9 +199,45 @@ export default function PixelPage() {
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-stone-400">
             Pixel UID
           </p>
-          <p className="mt-2 break-all font-mono text-sm text-stone-600">{pixel.uid}</p>
+          <p className="mt-2 break-all font-mono text-sm text-stone-600">
+            {pixel.uid}
+          </p>
         </div>
       </main>
+
+      {showDeleteConfirm ? (
+        <div className="fixed inset-0 z-[100] flex items-end justify-center bg-black/45 p-4 backdrop-blur-sm sm:items-center">
+          <section className="w-full max-w-sm rounded-[1.75rem] border border-white/80 bg-white p-5 shadow-2xl">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-rose-100 text-xl" aria-hidden>
+              🗑️
+            </div>
+            <h2 className="mt-4 text-xl font-black tracking-tight text-stone-900">
+              이 추억을 삭제할까요?
+            </h2>
+            <p className="mt-2 text-sm leading-6 text-stone-500">
+              삭제하면 피드와 꽃에서 사라지고 되돌릴 수 없습니다.
+            </p>
+            <div className="mt-5 grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setShowDeleteConfirm(false)}
+                disabled={deleting}
+                className="rounded-2xl bg-stone-100 px-4 py-3 text-sm font-bold text-stone-700 disabled:opacity-50"
+              >
+                취소
+              </button>
+              <button
+                type="button"
+                onClick={handleDelete}
+                disabled={deleting}
+                className="rounded-2xl bg-rose-600 px-4 py-3 text-sm font-bold text-white disabled:opacity-50"
+              >
+                {deleting ? "삭제 중..." : "완전히 삭제"}
+              </button>
+            </div>
+          </section>
+        </div>
+      ) : null}
     </div>
   );
 }
